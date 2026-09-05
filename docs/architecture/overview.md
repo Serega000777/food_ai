@@ -9,6 +9,7 @@ apps/
 packages/
   contracts/      Zod-схемы + типы, общие для api и клиентов (ADR 0005)
   domain/         чистые доменные правила (ADR 0008: initial goal formula)
+  nutrition/      per-100g→граммы конвертации, суммирование БЖУ (ADR 0010)
   ui-tokens/      design tokens — CSS custom properties (ADR 0009)
   config/         общий tsconfig/eslint/prettier
 infrastructure/
@@ -16,15 +17,14 @@ infrastructure/
   migrations/     SQL-миграции Drizzle
 ```
 
-Пакеты `nutrition`, `ai`, `analytics`, `test-utils` — целевая структура (master prompt
-§4), создаются вместе с фазой, которой они реально нужны. Telegram initData
-verification (`apps/api/src/modules/auth/telegram-init-data.ts`) намеренно НЕ вынесен в
-отдельный `packages/telegram` — единственный потребитель сейчас apps/api; вынесение
-оправдано, когда появится второй потребитель (например, admin), не раньше:
+Пакеты `ai`, `analytics`, `test-utils` — целевая структура (master prompt §4), создаются
+вместе с фазой, которой они реально нужны. Telegram initData verification
+(`apps/api/src/modules/auth/telegram-init-data.ts`) намеренно НЕ вынесен в отдельный
+`packages/telegram` — единственный потребитель сейчас apps/api; вынесение оправдано,
+когда появится второй потребитель (например, admin), не раньше:
 
 | Пакет        | Появляется в          | Назначение                                                                   |
 | ------------ | --------------------- | ---------------------------------------------------------------------------- |
-| `nutrition`  | Phase 3               | nutrient conversions, meal/day totals — детерминированные, unit-tested       |
 | `ai`         | Phase 4               | `VisionProvider`/`TextMealParser` интерфейсы + normalization + mock provider |
 | `analytics`  | Phase 6               | типизированные события                                                       |
 | `test-utils` | по мере необходимости | общие тестовые хелперы                                                       |
@@ -57,6 +57,12 @@ DRAFT → UPLOADING → QUEUED → ANALYZING → MATCHING
 
 Failure states: `UPLOAD_FAILED`, `ANALYSIS_FAILED`, `MATCH_FAILED`, `EXPIRED`, `CANCELLED`.
 Все переходы идемпотентны; confirm использует Idempotency-Key.
+
+**Manual entry (Phase 3, реализовано)** — тот же принцип без AI-звена: пользователь сам
+выбирает `Food` через поиск, `packages/nutrition` считает граммы → БЖУ, `POST /v1/meals`
+использует `Idempotency-Key` тем же способом, что и confirm в фото-флоу выше (AT-015).
+Дневные/дашборд-итоги считаются на лету суммированием `meal_entries`, без отдельной
+кэш-таблицы (ADR 0010) — как и без отдельной таблицы микронутриентов.
 
 ## Инфраструктура сейчас vs позже (ADR 0006)
 

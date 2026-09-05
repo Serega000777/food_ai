@@ -1,19 +1,20 @@
 import type { DashboardResponse, Macros } from "@food-ai/contracts";
+import { subtractMacros } from "@food-ai/nutrition";
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { and, desc, eq, isNull } from "drizzle-orm";
 
 import type { Database } from "../../db/client";
 import { DATABASE } from "../../db/database.token";
 import { goals } from "../../db/schema";
-
-const ZERO_MACROS: Macros = { calories: 0, proteinG: 0, fatG: 0, carbsG: 0 };
+import { DiaryService } from "../diary/diary.service";
 
 @Injectable()
 export class DashboardService {
-  constructor(@Inject(DATABASE) private readonly db: Database) {}
+  constructor(
+    @Inject(DATABASE) private readonly db: Database,
+    private readonly diary: DiaryService,
+  ) {}
 
-  /** No MealEntry table exists until Phase 3 — `consumed`/`meals` are the deliberate
-   * "empty state" (master prompt §13) until then; only the goal target is real. */
   async getDashboard(userId: string, date: string): Promise<DashboardResponse> {
     const [goal] = await this.db
       .select()
@@ -31,6 +32,8 @@ export class DashboardService {
       carbsG: goal.carbTargetG,
     };
 
-    return { date, target, consumed: ZERO_MACROS, remaining: target, meals: [] };
+    const { meals, totals: consumed } = await this.diary.getDiary(userId, date);
+
+    return { date, target, consumed, remaining: subtractMacros(target, consumed), meals };
   }
 }

@@ -16,7 +16,8 @@
     "docker:up": "docker compose -f infrastructure/docker/docker-compose.yml up -d",
     "docker:down": "docker compose -f infrastructure/docker/docker-compose.yml down",
     "db:generate": "pnpm --filter @food-ai/api db:generate",
-    "db:migrate": "pnpm --filter @food-ai/api db:migrate"
+    "db:migrate": "pnpm --filter @food-ai/api db:migrate",
+    "db:seed": "pnpm --filter @food-ai/api db:seed"
   },
   "devDependencies": {
     "turbo": "^2.3.3",

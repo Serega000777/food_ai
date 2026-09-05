@@ -12,23 +12,35 @@ OpenAPI-контракт появится вместе с первым реал�
   { "code": "SOME_ERROR", "message": "Human-readable message", "details": {}, "requestId": "..." }
   ```
 
-- `Idempotency-Key` для retry-prone create/confirm операций (double-confirm не создаёт
-  дубликат meal — AT-004).
-- Cursor pagination для длинной истории (diary, дальше — search).
-- Никаких raw provider prompts/секретов/стектрейсов в ответах API (master prompt §36).
+- `Idempotency-Key` для retry-prone create/confirm операций — `POST /v1/meals` (AT-015:
+  повтор с тем же ключом возвращает исходный meal, не создаёт дубликат).
+- Cursor pagination для длинной истории — появится, когда diary/search реально
+  понадобится пагинация (сейчас объём на пользователя мал).
+- Никаких raw provider prompts/секретов/стектрейсов в ответах API (master prompt §36) —
+  обеспечивается `AllExceptionsFilter`.
 
 ## Текущие эндпоинты
 
-| Метод | Путь                | Назначение                                            |
-| ----- | ------------------- | ----------------------------------------------------- |
-| GET   | `/health`           | Liveness + проверка соединения с БД (без `/v1`)       |
-| POST  | `/v1/auth/telegram` | Проверка initData, создание/поиск User, выдача сессии |
-| POST  | `/v1/auth/refresh`  | Ротация refresh-токена                                |
-| POST  | `/v1/auth/logout`   | Отзыв сессии                                          |
-| GET   | `/v1/me`            | Текущий user + profile (требует Bearer access token)  |
+| Метод  | Путь                | Назначение                                                  |
+| ------ | ------------------- | ----------------------------------------------------------- |
+| GET    | `/health`           | Liveness + проверка соединения с БД (без `/v1`)             |
+| POST   | `/v1/auth/telegram` | Проверка initData, создание/поиск User, выдача сессии       |
+| POST   | `/v1/auth/refresh`  | Ротация refresh-токена                                      |
+| POST   | `/v1/auth/logout`   | Отзыв сессии                                                |
+| GET    | `/v1/me`            | Текущий user + profile                                      |
+| PATCH  | `/v1/me/profile`    | Обновление профиля (онбординг автосохраняет по полям)       |
+| POST   | `/v1/goals`         | Сервер считает и сохраняет план по формуле (ADR 0008)       |
+| GET    | `/v1/dashboard`     | Цель/съедено/осталось на дату + приёмы пищи                 |
+| GET    | `/v1/foods/search`  | Поиск по каталогу продуктов (`?q=`)                         |
+| POST   | `/v1/meals`         | Ручное создание приёма пищи (`Idempotency-Key` опционально) |
+| PATCH  | `/v1/meals/:id`     | Редактирование (тип/время/состав)                           |
+| DELETE | `/v1/meals/:id`     | Удаление                                                    |
+| GET    | `/v1/diary`         | Приёмы пищи за локальный день пользователя (`?date=`)       |
+
+Все, кроме `/health`, требуют `Authorization: Bearer <accessToken>`.
 
 ## Запланированные эндпоинты (master prompt §30)
 
 Полный список — в master prompt документа-источника (`03_..._Master_Prompt.docx`, §30).
-Следующие в очереди (Phase 2, onboarding): `PATCH /v1/me/profile`, `POST /v1/goals`,
-`GET /v1/dashboard`.
+Следующие в очереди (Phase 4): `POST /v1/meals/photo`, `GET /v1/meal-analyses/:id`,
+`POST /v1/meal-analyses/:id/refine`, `POST /v1/meal-analyses/:id/confirm`.

@@ -1,5 +1,13 @@
 import type { DashboardResponse } from "@food-ai/contracts";
 
+const MEAL_TYPE_LABEL: Record<string, string> = {
+  BREAKFAST: "Завтрак",
+  LUNCH: "Обед",
+  DINNER: "Ужин",
+  SNACK: "Перекус",
+  OTHER: "Другое",
+};
+
 function MacroBar({ label, value, target }: { label: string; value: number; target: number }) {
   const percent = target > 0 ? Math.min(100, Math.round((value / target) * 100)) : 0;
   return (
@@ -47,12 +55,27 @@ export function Home({ dashboard }: { dashboard: DashboardResponse }) {
         </div>
       </div>
 
-      <div className="card">
-        <p className="subtitle">
-          Дневник и добавление еды по фото появятся в следующем обновлении. Пока здесь хранится
-          только твой план.
-        </p>
-      </div>
+      {/* Master prompt §13: all of today's meals visible here, no "View All" hiding
+          the diary — full editing (edit/delete) still lives in the Diary tab. */}
+      {dashboard.meals.length === 0 ? (
+        <div className="card">
+          <p className="subtitle">Сегодня ещё ничего не добавлено — нажми «+», чтобы начать.</p>
+        </div>
+      ) : (
+        dashboard.meals.map((meal) => (
+          <div key={meal.id} className="card">
+            <div className="meal-card-header">
+              <strong>{MEAL_TYPE_LABEL[meal.mealType] ?? meal.mealType}</strong>
+              <span>{Math.round(meal.totalCalories)} ккал</span>
+            </div>
+            {meal.items.map((item) => (
+              <div key={item.id} className="subtitle">
+                {item.displayName} · {Math.round(item.grams)} г
+              </div>
+            ))}
+          </div>
+        ))
+      )}
 
       <div className="spacer" />
     </div>

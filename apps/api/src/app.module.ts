@@ -7,8 +7,11 @@ import { validateEnv } from "./config/env";
 import { DbModule } from "./db/db.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { DashboardModule } from "./modules/dashboard/dashboard.module";
+import { DiaryModule } from "./modules/diary/diary.module";
+import { FoodsModule } from "./modules/foods/foods.module";
 import { GoalsModule } from "./modules/goals/goals.module";
 import { HealthModule } from "./modules/health/health.module";
+import { MealsModule } from "./modules/meals/meals.module";
 import { UsersModule } from "./modules/users/users.module";
 
 @Module({
@@ -23,6 +26,9 @@ import { UsersModule } from "./modules/users/users.module";
     AuthModule,
     UsersModule,
     GoalsModule,
+    FoodsModule,
+    MealsModule,
+    DiaryModule,
     DashboardModule,
     HealthModule,
   ],

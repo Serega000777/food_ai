@@ -13,7 +13,7 @@ platform-agnostic, чтобы iOS/Android позже подключились к
 - **Client**: React + Vite Telegram Mini App (ADR 0009); native (Expo/React Native) позже на том же API.
 - **Monorepo**: pnpm workspaces + Turborepo (ADR 0002).
 - **Shared**: `packages/contracts` (Zod-схемы и типы, ADR 0005), `packages/domain` (Goal formula, ADR 0008),
-  `packages/ui-tokens` (design tokens), `packages/config`.
+  `packages/nutrition` (граммы → БЖУ, ADR 0010), `packages/ui-tokens` (design tokens), `packages/config`.
 - Redis/очереди/object storage сознательно не добавлены — только когда появится реальный
   кейс в Phase 4 (ADR 0006).
 
@@ -26,7 +26,8 @@ pnpm install
 cp .env.example .env        # заполните TELEGRAM_BOT_TOKEN, JWT_ACCESS_SECRET
 pnpm docker:up               # поднимает Postgres в Docker
 pnpm db:migrate                # применяет миграции
-pnpm dev                         # api на :3000, Vite dev server для apps/miniapp на :5173
+pnpm db:seed                     # стартовый каталог продуктов для ручного ввода
+pnpm dev                           # api на :3000, Vite dev server для apps/miniapp на :5173
 ```
 
 Проверить, что всё поднялось:
@@ -65,6 +66,7 @@ apps/
 packages/
   contracts/      Zod-схемы и типы, общие для api и клиентов
   domain/         чистые доменные правила (initial goal formula)
+  nutrition/      per-100g→граммы, суммирование БЖУ — детерминированные, unit-tested
   ui-tokens/      design tokens (CSS custom properties)
   config/         общие tsconfig/eslint/prettier
 infrastructure/
@@ -74,8 +76,8 @@ docs/
   architecture/ · api/ · product/ · decisions/
 ```
 
-Пакеты `nutrition`, `ai`, `analytics`, `test-utils` (целевая структура, master prompt §4)
-появляются в репозитории по мере того, как их наполняет соответствующая фаза — не раньше.
+Пакеты `ai`, `analytics`, `test-utils` (целевая структура, master prompt §4) появляются
+в репозитории по мере того, как их наполняет соответствующая фаза — не раньше.
 
 ## Правила разработки (не переносим в код без причины)
 
@@ -90,5 +92,6 @@ docs/
 
 ## Roadmap
 
-См. таблицу фаз в `docs/architecture/overview.md`. Текущий статус: **Phase 2** —
-onboarding (API + Mini App), стартовый расчёт цели, Home с пустым состоянием — готово.
+См. таблицу фаз в `docs/architecture/overview.md`. Текущий статус: **Phase 3** — ручной
+ввод еды, поиск по каталогу продуктов, Diary, реальные итоги на Home/Dashboard,
+bottom navigation (Сегодня/+/Дневник) — готово.

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 
 import { ApiError } from "./api/client";
 import { getDashboard, loginWithTelegram } from "./api/endpoints";
-import { Home } from "./screens/Home";
+import { MainApp } from "./screens/MainApp";
 import { StatusScreen } from "./screens/StatusScreen";
 import { OnboardingFlow } from "./screens/onboarding/OnboardingFlow";
 import { getTelegramInitData, initTelegramWebApp } from "./telegram";
@@ -60,6 +60,6 @@ export function App() {
     case "onboarding":
       return <OnboardingFlow onComplete={(dashboard) => setState({ status: "home", dashboard })} />;
     case "home":
-      return <Home dashboard={state.dashboard} />;
+      return <MainApp initialDashboard={state.dashboard} />;
   }
 }

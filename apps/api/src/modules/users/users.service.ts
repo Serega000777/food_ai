@@ -72,6 +72,12 @@ export class UsersService {
     return { user: toUser(row.user), profile: toProfile(row.profile) };
   }
 
+  /** Called on every login with the client's detected timezone (AuthService) — keeps
+   * it fresh if the user travels, without a dedicated settings screen yet. */
+  async updateTimezone(userId: string, timezone: string): Promise<void> {
+    await this.db.update(users).set({ timezone }).where(eq(users.id, userId));
+  }
+
   /** Partial update — onboarding autosaves one field/screen at a time. */
   async updateProfile(userId: string, input: UpdateProfileInput): Promise<UserProfile> {
     const [row] = await this.db

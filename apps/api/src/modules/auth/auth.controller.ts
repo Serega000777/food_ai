@@ -26,7 +26,7 @@ export class AuthController {
   async telegram(
     @Body(new ZodValidationPipe(telegramAuthSchema)) body: TelegramAuthInput,
   ): Promise<{ user: User } & AuthTokens> {
-    const { user, tokens } = await this.auth.loginWithTelegram(body.initData);
+    const { user, tokens } = await this.auth.loginWithTelegram(body.initData, body.timezone);
     return { user, ...tokens };
   }
 

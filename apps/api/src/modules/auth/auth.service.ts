@@ -3,6 +3,7 @@ import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 
+import { isValidTimeZone } from "../../common/local-day";
 import type { Env } from "../../config/env";
 import { UsersService } from "../users/users.service";
 
@@ -18,7 +19,10 @@ export class AuthService {
     private readonly config: ConfigService<Env, true>,
   ) {}
 
-  async loginWithTelegram(initData: string): Promise<{ user: User; tokens: AuthTokens }> {
+  async loginWithTelegram(
+    initData: string,
+    timezone?: string,
+  ): Promise<{ user: User; tokens: AuthTokens }> {
     const botToken = this.config.get("TELEGRAM_BOT_TOKEN", { infer: true });
     const result = verifyTelegramInitData(initData, botToken);
 
@@ -26,7 +30,13 @@ export class AuthService {
       throw new UnauthorizedException(`Telegram initData rejected: ${result.reason}`);
     }
 
-    const user = await this.users.findOrCreateByTelegramId(result.user);
+    let user = await this.users.findOrCreateByTelegramId(result.user);
+    // Best-effort: an auto-detected value the client got wrong shouldn't fail login.
+    if (timezone && isValidTimeZone(timezone) && timezone !== user.timezone) {
+      await this.users.updateTimezone(user.id, timezone);
+      user = { ...user, timezone };
+    }
+
     const { refreshToken } = await this.sessions.issue(user.id);
     const accessToken = await this.jwt.signAsync({ sub: user.id });
 

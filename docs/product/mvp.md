@@ -57,17 +57,20 @@ wearables-интеграций, автообучение моделей на п�
 | 0    | Repo audit, monorepo bootstrap, CI, ADR, backend-скелет + health-check                               | ✅     |
 | 1    | DB, миграции, User/Profile/Goal, Telegram auth, session, `/me`                                       | ✅     |
 | 2    | Onboarding API/UI, стартовый расчёт цели, Home shell, навигация Mini App                             | ✅\*   |
-| 3    | Food/Nutrition Engine, ручной ввод еды, Diary, dashboard totals                                      | —      |
+| 3    | Food/Nutrition Engine, ручной ввод еды, Diary, dashboard totals                                      | ✅\*\* |
 | 4    | Object storage, upload, AIAnalysis state machine, очередь, mock VisionProvider, AI Result UI         | —      |
 | 5    | Первый реальный AI-провайдер, structured output, matching, Confidence Engine, hidden-calorie вопросы | —      |
 | 6    | Recent/frequent meals, WeightLog, progress, analytics events                                         | —      |
 | 7    | Hardening: observability, security review, e2e, accessibility, error UX                              | —      |
 | 8    | Monetization shell: EntitlementService, paywall после magic moment                                   | —      |
 
-\* Bottom navigation (Сегодня/Дневник/+/Прогресс/AI) сознательно отложена до Phase 3 —
-раньше это были бы четыре вкладки на несуществующий функционал (master prompt §13: "Не
-оставляй fake screen, который обещает несуществующую функцию"). Home сейчас — единственный
-экран после онбординга.
+\* Bottom navigation появилась в Phase 3 вместе с Дневником: Сегодня / + / Дневник.
+Прогресс и AI по-прежнему скрыты — раньше это были бы вкладки на несуществующий
+функционал (master prompt §13: "Не оставляй fake screen, который обещает
+несуществующую функцию").
+
+\*\* Без `DailySummary`/`FoodNutrient` таблиц — итоги считаются на лету, микронутриенты
+не хранятся (ADR 0010, сознательное упрощение, не забытая работа).
 
 **STOP MVP здесь**, если явно не попросили продолжать. Дальше: 1.1 voice/barcode/recipes,
 1.2 Personal Food Memory + Weekly AI Report + AI Coach, 1.3 Adaptive Energy Expenditure,
