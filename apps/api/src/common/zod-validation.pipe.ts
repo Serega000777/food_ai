@@ -8,7 +8,9 @@ export class ZodValidationPipe implements PipeTransform {
   transform(value: unknown) {
     const result = this.schema.safeParse(value);
     if (!result.success) {
-      throw new BadRequestException(result.error.flatten());
+      // A `code` field is AllExceptionsFilter's signal to use this body as-is instead
+      // of the generic per-status default (see its handling of HttpException).
+      throw new BadRequestException({ code: "VALIDATION_ERROR", details: result.error.flatten() });
     }
     return result.data;
   }

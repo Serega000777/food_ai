@@ -5,27 +5,27 @@
 ```
 apps/
   api/            NestJS backend — единственный источник истины для домена и расчётов
-  miniapp/        Phase 2 — React + Vite, первый (и пока единственный) клиент
+  miniapp/        React + Vite, первый (и пока единственный) клиент (ADR 0009)
 packages/
   contracts/      Zod-схемы + типы, общие для api и клиентов (ADR 0005)
   domain/         чистые доменные правила (ADR 0008: initial goal formula)
+  ui-tokens/      design tokens — CSS custom properties (ADR 0009)
   config/         общий tsconfig/eslint/prettier
 infrastructure/
   docker/         локальный dev-стек (сейчас: postgres)
   migrations/     SQL-миграции Drizzle
 ```
 
-Пакеты `nutrition`, `ai`, `analytics`, `ui-tokens`, `test-utils` — целевая структура
-(master prompt §4), создаются вместе с фазой, которой они реально нужны. Telegram
-initData verification (`apps/api/src/modules/auth/telegram-init-data.ts`) намеренно НЕ
-вынесен в отдельный `packages/telegram` — единственный потребитель сейчас apps/api;
-вынесение оправдано, когда появится второй потребитель (например, admin), не раньше:
+Пакеты `nutrition`, `ai`, `analytics`, `test-utils` — целевая структура (master prompt
+§4), создаются вместе с фазой, которой они реально нужны. Telegram initData
+verification (`apps/api/src/modules/auth/telegram-init-data.ts`) намеренно НЕ вынесен в
+отдельный `packages/telegram` — единственный потребитель сейчас apps/api; вынесение
+оправдано, когда появится второй потребитель (например, admin), не раньше:
 
 | Пакет        | Появляется в          | Назначение                                                                   |
 | ------------ | --------------------- | ---------------------------------------------------------------------------- |
 | `nutrition`  | Phase 3               | nutrient conversions, meal/day totals — детерминированные, unit-tested       |
 | `ai`         | Phase 4               | `VisionProvider`/`TextMealParser` интерфейсы + normalization + mock provider |
-| `ui-tokens`  | Phase 2               | design tokens (spacing/radius/цвета/motion)                                  |
 | `analytics`  | Phase 6               | типизированные события                                                       |
 | `test-utils` | по мере необходимости | общие тестовые хелперы                                                       |
 

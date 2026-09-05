@@ -5,6 +5,7 @@ import { Test } from "@nestjs/testing";
 import request from "supertest";
 
 import { AppModule } from "../../app.module";
+import { AllExceptionsFilter } from "../../common/all-exceptions.filter";
 
 /**
  * Exercises the real HTTP stack against a real Postgres (see infrastructure/docker and
@@ -54,6 +55,7 @@ describe("Auth (e2e)", () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication();
     app.setGlobalPrefix("v1", { exclude: ["health"] });
+    app.useGlobalFilters(new AllExceptionsFilter());
     await app.init();
   });
 
@@ -65,10 +67,13 @@ describe("Auth (e2e)", () => {
     // Appending an extra field changes the data-check-string without touching `hash` itself,
     // so this actually invalidates the signature (unlike mutating `hash`, where an odd
     // trailing hex nibble gets silently dropped by Buffer.from(..., "hex")).
-    await request(app.getHttpServer())
+    const res = await request(app.getHttpServer())
       .post("/v1/auth/telegram")
       .send({ initData: `${signInitData(nextTelegramUserId())}&tampered=1` })
       .expect(401);
+
+    // The error envelope (docs/api/README.md), not Nest's default {statusCode, message}.
+    expect(res.body).toMatchObject({ code: "UNAUTHORIZED", requestId: expect.any(String) });
   });
 
   it("AT-002: rejects stale initData beyond the configured freshness window", async () => {
@@ -84,6 +89,19 @@ describe("Auth (e2e)", () => {
     const first = await loginAsNewUser(app, userId);
     const second = await loginAsNewUser(app, userId);
     expect(second.user.id).toBe(first.user.id);
+  });
+
+  it("handles two concurrent logins for a brand-new Telegram id without a 500 (race-safe insert)", async () => {
+    const initData = signInitData(nextTelegramUserId());
+
+    const [first, second] = await Promise.all([
+      request(app.getHttpServer()).post("/v1/auth/telegram").send({ initData }),
+      request(app.getHttpServer()).post("/v1/auth/telegram").send({ initData }),
+    ]);
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    expect(first.body.user.id).toBe(second.body.user.id);
   });
 
   it("rejects requests to protected routes without a token", async () => {

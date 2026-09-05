@@ -31,7 +31,9 @@ export class UsersService {
   constructor(@Inject(DATABASE) private readonly db: Database) {}
 
   /** Finds the user for this Telegram identity, or creates the user + an empty profile
-   * (filled in by onboarding, Phase 2) in one transaction. */
+   * (filled in by onboarding, Phase 2). Two logins for the same brand-new Telegram id
+   * can race here (e.g. a Mini App retry) — `onConflictDoNothing` makes the loser fall
+   * back to re-reading the winner's row instead of crashing on the unique constraint. */
   async findOrCreateByTelegramId(telegramUser: TelegramInitDataUser): Promise<User> {
     const telegramId = BigInt(telegramUser.id);
 
@@ -39,19 +41,23 @@ export class UsersService {
     if (existing) return toUser(existing);
 
     return this.db.transaction(async (tx) => {
-      const createdUser = firstOrThrow(
-        await tx
-          .insert(users)
-          .values({
-            telegramId,
-            locale: telegramUser.language_code?.startsWith("ru") ? "ru" : "en",
-          })
-          .returning(),
-      );
+      const inserted = await tx
+        .insert(users)
+        .values({
+          telegramId,
+          locale: telegramUser.language_code?.startsWith("ru") ? "ru" : "en",
+        })
+        .onConflictDoNothing({ target: users.telegramId })
+        .returning();
 
-      await tx.insert(userProfiles).values({ userId: createdUser.id });
+      const won = inserted[0];
+      const user =
+        won ?? firstOrThrow(await tx.select().from(users).where(eq(users.telegramId, telegramId)));
 
-      return toUser(createdUser);
+      // Only the winner creates the profile row — the loser's user already has one.
+      if (won) await tx.insert(userProfiles).values({ userId: user.id });
+
+      return toUser(user);
     });
   }
 

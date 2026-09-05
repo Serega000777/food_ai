@@ -10,9 +10,10 @@ platform-agnostic, чтобы iOS/Android позже подключились к
 ## Стек
 
 - **Backend**: NestJS + TypeScript, PostgreSQL, Drizzle ORM. Модульный монолит (ADR 0001, ADR 0003, ADR 0004).
-- **Client (Phase 2+)**: React + Vite Telegram Mini App; native (Expo/React Native) позже на том же API.
+- **Client**: React + Vite Telegram Mini App (ADR 0009); native (Expo/React Native) позже на том же API.
 - **Monorepo**: pnpm workspaces + Turborepo (ADR 0002).
-- **Shared**: `packages/contracts` (Zod-схемы и типы — источник правды для DTO, ADR 0005), `packages/config`.
+- **Shared**: `packages/contracts` (Zod-схемы и типы, ADR 0005), `packages/domain` (Goal formula, ADR 0008),
+  `packages/ui-tokens` (design tokens), `packages/config`.
 - Redis/очереди/object storage сознательно не добавлены — только когда появится реальный
   кейс в Phase 4 (ADR 0006).
 
@@ -22,10 +23,10 @@ platform-agnostic, чтобы iOS/Android позже подключились к
 
 ```bash
 pnpm install
-cp .env.example .env
-pnpm docker:up       # поднимает Postgres в Docker
-pnpm db:migrate      # применяет миграции (пока пустой journal — Phase 0)
-pnpm dev             # api на :3000
+cp .env.example .env        # заполните TELEGRAM_BOT_TOKEN, JWT_ACCESS_SECRET
+pnpm docker:up               # поднимает Postgres в Docker
+pnpm db:migrate                # применяет миграции
+pnpm dev                         # api на :3000, Vite dev server для apps/miniapp на :5173
 ```
 
 Проверить, что всё поднялось:
@@ -33,6 +34,13 @@ pnpm dev             # api на :3000
 ```bash
 curl http://localhost:3000/health
 # {"status":"ok","db":"ok"}
+```
+
+Открыть клиент в браузере (Mini App вне Telegram работает только через dev-заглушку
+`?mock_init_data=...`, см. `apps/miniapp/src/telegram.ts` — в production такого пути нет):
+
+```bash
+pnpm --filter @food-ai/miniapp dev
 ```
 
 ## Частые команды
@@ -43,7 +51,7 @@ pnpm lint        # eslint по всему монорепо
 pnpm typecheck   # tsc --noEmit по всему монорепо
 pnpm test        # unit-тесты (vitest в packages/*, jest в apps/api)
 pnpm format      # prettier --write
-pnpm db:generate # сгенерировать SQL-миграцию из схемы Drizzle (появится с Phase 1)
+pnpm db:generate # сгенерировать SQL-миграцию из схемы Drizzle
 pnpm db:migrate  # применить миграции к DATABASE_URL
 pnpm docker:down # остановить Postgres
 ```
@@ -53,9 +61,11 @@ pnpm docker:down # остановить Postgres
 ```
 apps/
   api/            NestJS backend
-  miniapp/        Phase 2 — React + Vite Telegram Mini App
+  miniapp/        React + Vite Telegram Mini App
 packages/
   contracts/      Zod-схемы и типы, общие для api и клиентов
+  domain/         чистые доменные правила (initial goal formula)
+  ui-tokens/      design tokens (CSS custom properties)
   config/         общие tsconfig/eslint/prettier
 infrastructure/
   docker/         docker-compose (postgres + api)
@@ -64,9 +74,8 @@ docs/
   architecture/ · api/ · product/ · decisions/
 ```
 
-Пакеты `domain`, `nutrition`, `ai`, `telegram`, `analytics`, `ui-tokens`, `test-utils`
-(целевая структура, master prompt §4) появляются в репозитории по мере того, как их
-наполняет соответствующая фаза — не раньше.
+Пакеты `nutrition`, `ai`, `analytics`, `test-utils` (целевая структура, master prompt §4)
+появляются в репозитории по мере того, как их наполняет соответствующая фаза — не раньше.
 
 ## Правила разработки (не переносим в код без причины)
 
@@ -81,5 +90,5 @@ docs/
 
 ## Roadmap
 
-См. таблицу фаз в `docs/architecture/overview.md`. Текущий статус: **Phase 0** —
-монорепо, CI, ADR, backend-скелет с health-check — готово.
+См. таблицу фаз в `docs/architecture/overview.md`. Текущий статус: **Phase 2** —
+onboarding (API + Mini App), стартовый расчёт цели, Home с пустым состоянием — готово.

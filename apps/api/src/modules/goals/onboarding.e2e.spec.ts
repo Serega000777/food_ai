@@ -5,6 +5,7 @@ import { Test } from "@nestjs/testing";
 import request from "supertest";
 
 import { AppModule } from "../../app.module";
+import { AllExceptionsFilter } from "../../common/all-exceptions.filter";
 
 /** Exercises the full onboarding vertical slice end-to-end against real Postgres:
  * Telegram login -> PATCH profile -> POST goals (server-computed plan) -> GET dashboard
@@ -49,6 +50,7 @@ describe("Onboarding (e2e)", () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication();
     app.setGlobalPrefix("v1", { exclude: ["health"] });
+    app.useGlobalFilters(new AllExceptionsFilter());
     await app.init();
   });
 
@@ -59,11 +61,13 @@ describe("Onboarding (e2e)", () => {
   it("rejects a goal before the profile is complete", async () => {
     const { accessToken } = await loginAsNewUser(app);
 
-    await request(app.getHttpServer())
+    const res = await request(app.getHttpServer())
       .post("/v1/goals")
       .set("Authorization", `Bearer ${accessToken}`)
       .send({ type: "LOSE", currentWeightKg: 82, activityLevel: "sedentary" })
       .expect(400);
+
+    expect(res.body).toMatchObject({ code: "BAD_REQUEST", requestId: expect.any(String) });
   });
 
   it("completes onboarding: profile -> goal -> dashboard reflects the server-computed target", async () => {

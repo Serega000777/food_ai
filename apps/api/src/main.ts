@@ -5,6 +5,7 @@ import { NestFactory } from "@nestjs/core";
 import helmet from "helmet";
 
 import { AppModule } from "./app.module";
+import { AllExceptionsFilter } from "./common/all-exceptions.filter";
 import type { Env } from "./config/env";
 
 async function bootstrap() {
@@ -15,6 +16,7 @@ async function bootstrap() {
   app.use(helmet());
   app.enableCors({ origin: config.get("CORS_ORIGIN", { infer: true }) });
   app.setGlobalPrefix("v1", { exclude: ["health"] });
+  app.useGlobalFilters(new AllExceptionsFilter());
   // Request validation is Zod-based at the boundary (ADR 0005) — see ZodValidationPipe,
   // used per-endpoint (e.g. AuthController), not as a global pipe.
 

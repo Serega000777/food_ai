@@ -1,0 +1,187 @@
+@import "@food-ai/ui-tokens/src/tokens.css";
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family);
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+}
+
+.screen {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-5) var(--space-4);
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.screen-centered {
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-4);
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.subtitle {
+  color: var(--color-text-muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.primary-button {
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity var(--motion-fast);
+}
+
+.primary-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.primary-button:active:not(:disabled) {
+  opacity: 0.85;
+}
+
+.option-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.option-card {
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  text-align: left;
+  font-size: 16px;
+  cursor: pointer;
+  transition:
+    border-color var(--motion-fast),
+    background var(--motion-fast);
+}
+
+.option-card.selected {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.field label {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.field input,
+.field select {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  font-size: 16px;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.back-link {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 15px;
+  padding: var(--space-2) 0;
+  align-self: flex-start;
+  cursor: pointer;
+}
+
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin-bottom: var(--space-4);
+}
+
+.big-number {
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.macro-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.macro-item {
+  flex: 1;
+  text-align: center;
+}
+
+.macro-item .label {
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.macro-item .value {
+  font-size: 18px;
+  font-weight: 700;
+  margin-top: var(--space-1);
+}
+
+.progress-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--color-border);
+  overflow: hidden;
+  margin-top: var(--space-2);
+}
+
+.progress-bar > div {
+  height: 100%;
+  background: var(--color-accent);
+  transition: width var(--motion-base);
+}
+
+.error-text {
+  color: var(--color-danger);
+  font-size: 14px;
+}
