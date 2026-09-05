@@ -1,7 +1,13 @@
-import type { MeResponse } from "@food-ai/contracts";
-import { Controller, Get, UseGuards } from "@nestjs/common";
+import {
+  updateProfileSchema,
+  type MeResponse,
+  type UpdateProfileInput,
+  type UserProfile,
+} from "@food-ai/contracts";
+import { Body, Controller, Get, Patch, UseGuards } from "@nestjs/common";
 
 import { CurrentUser } from "../../common/current-user.decorator";
+import { ZodValidationPipe } from "../../common/zod-validation.pipe";
 import type { AuthenticatedUser } from "../auth/authenticated-request";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 
@@ -15,5 +21,14 @@ export class UsersController {
   @Get("me")
   me(@CurrentUser() user: AuthenticatedUser): Promise<MeResponse> {
     return this.users.getMe(user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch("me/profile")
+  updateProfile(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(updateProfileSchema)) body: UpdateProfileInput,
+  ): Promise<UserProfile> {
+    return this.users.updateProfile(user.id, body);
   }
 }

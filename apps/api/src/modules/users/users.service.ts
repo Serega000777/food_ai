@@ -1,4 +1,4 @@
-import type { MeResponse, User, UserProfile } from "@food-ai/contracts";
+import type { MeResponse, UpdateProfileInput, User, UserProfile } from "@food-ai/contracts";
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { eq } from "drizzle-orm";
 
@@ -64,5 +64,17 @@ export class UsersService {
 
     if (!row) throw new NotFoundException("User not found");
     return { user: toUser(row.user), profile: toProfile(row.profile) };
+  }
+
+  /** Partial update — onboarding autosaves one field/screen at a time. */
+  async updateProfile(userId: string, input: UpdateProfileInput): Promise<UserProfile> {
+    const [row] = await this.db
+      .update(userProfiles)
+      .set(input)
+      .where(eq(userProfiles.userId, userId))
+      .returning();
+
+    if (!row) throw new NotFoundException("User not found");
+    return toProfile(row);
   }
 }

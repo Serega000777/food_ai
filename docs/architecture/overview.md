@@ -8,22 +8,21 @@ apps/
   miniapp/        Phase 2 — React + Vite, первый (и пока единственный) клиент
 packages/
   contracts/      Zod-схемы + типы, общие для api и клиентов (ADR 0005)
+  domain/         чистые доменные правила (ADR 0008: initial goal formula)
   config/         общий tsconfig/eslint/prettier
 infrastructure/
   docker/         локальный dev-стек (сейчас: postgres)
   migrations/     SQL-миграции Drizzle
 ```
 
-Пакеты `domain`, `nutrition`, `ai`, `analytics`, `ui-tokens`, `test-utils` — целевая
-структура (master prompt §4), создаются вместе с фазой, которой они реально нужны.
-Telegram initData verification (`apps/api/src/modules/auth/telegram-init-data.ts`)
-намеренно НЕ вынесен в отдельный `packages/telegram` — единственный потребитель сейчас
-apps/api; вынесение оправдано, когда появится второй потребитель (например, admin),
-не раньше:
+Пакеты `nutrition`, `ai`, `analytics`, `ui-tokens`, `test-utils` — целевая структура
+(master prompt §4), создаются вместе с фазой, которой они реально нужны. Telegram
+initData verification (`apps/api/src/modules/auth/telegram-init-data.ts`) намеренно НЕ
+вынесен в отдельный `packages/telegram` — единственный потребитель сейчас apps/api;
+вынесение оправдано, когда появится второй потребитель (например, admin), не раньше:
 
 | Пакет        | Появляется в          | Назначение                                                                   |
 | ------------ | --------------------- | ---------------------------------------------------------------------------- |
-| `domain`     | Phase 1–3             | чистые доменные правила (Goal formula, Nutrition Engine)                     |
 | `nutrition`  | Phase 3               | nutrient conversions, meal/day totals — детерминированные, unit-tested       |
 | `ai`         | Phase 4               | `VisionProvider`/`TextMealParser` интерфейсы + normalization + mock provider |
 | `ui-tokens`  | Phase 2               | design tokens (spacing/radius/цвета/motion)                                  |

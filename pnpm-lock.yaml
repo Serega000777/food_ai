@@ -25,6 +25,9 @@ importers:
       "@food-ai/contracts":
         specifier: workspace:*
         version: link:../../packages/contracts
+      "@food-ai/domain":
+        specifier: workspace:*
+        version: link:../../packages/domain
       "@nestjs/common":
         specifier: ^10.4.15
         version: 10.4.22(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -137,6 +140,21 @@ importers:
       zod:
         specifier: ^3.24.1
         version: 3.25.76
+    devDependencies:
+      "@food-ai/config":
+        specifier: workspace:*
+        version: link:../config
+      eslint:
+        specifier: ^9.17.0
+        version: 9.39.5
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.20.1)(terser@5.51.2)
+
+  packages/domain:
     devDependencies:
       "@food-ai/config":
         specifier: workspace:*

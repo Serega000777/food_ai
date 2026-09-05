@@ -31,3 +31,13 @@ export const meResponseSchema = z.object({
   profile: userProfileSchema,
 });
 export type MeResponse = z.infer<typeof meResponseSchema>;
+
+/** All fields optional: onboarding may send them one screen at a time (product
+ * blueprint §5.3–§5.5: "autosave onboarding draft"). */
+export const updateProfileSchema = z.object({
+  birthDate: z.string().date().optional(),
+  sex: sexSchema.optional(),
+  heightCm: z.number().int().positive().max(300).optional(),
+  unitSystem: unitSystemSchema.optional(),
+});
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
