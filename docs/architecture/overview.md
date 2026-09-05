@@ -14,13 +14,15 @@ infrastructure/
   migrations/     SQL-миграции Drizzle
 ```
 
-Пакеты `domain`, `nutrition`, `ai`, `telegram`, `analytics`, `ui-tokens`, `test-utils` —
-целевая структура (master prompt §4), создаются вместе с фазой, которой они реально
-нужны:
+Пакеты `domain`, `nutrition`, `ai`, `analytics`, `ui-tokens`, `test-utils` — целевая
+структура (master prompt §4), создаются вместе с фазой, которой они реально нужны.
+Telegram initData verification (`apps/api/src/modules/auth/telegram-init-data.ts`)
+намеренно НЕ вынесен в отдельный `packages/telegram` — единственный потребитель сейчас
+apps/api; вынесение оправдано, когда появится второй потребитель (например, admin),
+не раньше:
 
 | Пакет        | Появляется в          | Назначение                                                                   |
 | ------------ | --------------------- | ---------------------------------------------------------------------------- |
-| `telegram`   | Phase 1               | initData verification helpers                                                |
 | `domain`     | Phase 1–3             | чистые доменные правила (Goal formula, Nutrition Engine)                     |
 | `nutrition`  | Phase 3               | nutrient conversions, meal/day totals — детерминированные, unit-tested       |
 | `ai`         | Phase 4               | `VisionProvider`/`TextMealParser` интерфейсы + normalization + mock provider |

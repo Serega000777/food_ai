@@ -14,8 +14,9 @@ async function bootstrap() {
   app.enableShutdownHooks();
   app.use(helmet());
   app.enableCors({ origin: config.get("CORS_ORIGIN", { infer: true }) });
-  // Request validation is Zod-based at the boundary (ADR 0005), wired in alongside
-  // the first real DTO in Phase 1 (Telegram auth).
+  app.setGlobalPrefix("v1", { exclude: ["health"] });
+  // Request validation is Zod-based at the boundary (ADR 0005) — see ZodValidationPipe,
+  // used per-endpoint (e.g. AuthController), not as a global pipe.
 
   const port = config.get("PORT", { infer: true });
   await app.listen(port);

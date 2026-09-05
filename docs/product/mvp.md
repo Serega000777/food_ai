@@ -55,7 +55,7 @@ wearables-интеграций, автообучение моделей на п�
 | Фаза | Состав                                                                                               | Статус |
 | ---- | ---------------------------------------------------------------------------------------------------- | ------ |
 | 0    | Repo audit, monorepo bootstrap, CI, ADR, backend-скелет + health-check                               | ✅     |
-| 1    | DB, миграции, User/Profile/Goal, Telegram auth, session, `/me`                                       | —      |
+| 1    | DB, миграции, User/Profile/Goal, Telegram auth, session, `/me`                                       | ✅     |
 | 2    | Onboarding API/UI, стартовый расчёт цели, Home shell, навигация Mini App                             | —      |
 | 3    | Food/Nutrition Engine, ручной ввод еды, Diary, dashboard totals                                      | —      |
 | 4    | Object storage, upload, AIAnalysis state machine, очередь, mock VisionProvider, AI Result UI         | —      |

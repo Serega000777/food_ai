@@ -19,11 +19,16 @@ OpenAPI-контракт появится вместе с первым реал�
 
 ## Текущие эндпоинты
 
-| Метод | Путь      | Назначение                          |
-| ----- | --------- | ----------------------------------- |
-| GET   | `/health` | Liveness + проверка соединения с БД |
+| Метод | Путь                | Назначение                                            |
+| ----- | ------------------- | ----------------------------------------------------- |
+| GET   | `/health`           | Liveness + проверка соединения с БД (без `/v1`)       |
+| POST  | `/v1/auth/telegram` | Проверка initData, создание/поиск User, выдача сессии |
+| POST  | `/v1/auth/refresh`  | Ротация refresh-токена                                |
+| POST  | `/v1/auth/logout`   | Отзыв сессии                                          |
+| GET   | `/v1/me`            | Текущий user + profile (требует Bearer access token)  |
 
 ## Запланированные эндпоинты (master prompt §30)
 
 Полный список — в master prompt документа-источника (`03_..._Master_Prompt.docx`, §30).
-Первые в очереди (Phase 1): `POST /v1/auth/telegram`, `GET /v1/me`.
+Следующие в очереди (Phase 2, onboarding): `PATCH /v1/me/profile`, `POST /v1/goals`,
+`GET /v1/dashboard`.
