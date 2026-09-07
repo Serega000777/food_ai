@@ -119,11 +119,14 @@ export class MealsService {
   }
 
   /** `idempotencyKey`, when the client sends one, makes a retried request return the
-   * original meal instead of creating a second one (technical spec §24, AT-015). */
+   * original meal instead of creating a second one (technical spec §24, AT-015).
+   * `source` defaults to MANUAL; MealAnalysesService passes PHOTO when confirming an
+   * AI analysis through this same, already-correct nutrition-computation path. */
   async create(
     userId: string,
     input: CreateMealInput,
     idempotencyKey?: string,
+    source: "MANUAL" | "PHOTO" = "MANUAL",
   ): Promise<MealEntryDto> {
     if (idempotencyKey) {
       const existing = await this.findByIdempotencyKey(userId, idempotencyKey);
@@ -144,7 +147,7 @@ export class MealsService {
             userId,
             mealType: input.mealType,
             eatenAt,
-            source: "MANUAL",
+            source,
             ...macrosToColumns(total),
           })
           .returning(),
@@ -194,6 +197,12 @@ export class MealsService {
         .where(eq(mealItems.mealEntryId, winnerEntry.id));
       return toMealEntryDto(winnerEntry, winnerItems);
     });
+  }
+
+  async getById(userId: string, mealId: string): Promise<MealEntryDto> {
+    const entry = await this.requireOwnedEntry(userId, mealId);
+    const items = await this.db.select().from(mealItems).where(eq(mealItems.mealEntryId, mealId));
+    return toMealEntryDto(entry, items);
   }
 
   /** 404 (not 403) on a meal owned by another user — never confirm existence of

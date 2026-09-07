@@ -53,10 +53,14 @@ export async function apiRequest<T>(
   init?: RequestInit,
   allowRefresh = true,
 ): Promise<T> {
+  // FormData (photo upload) must NOT get a manual Content-Type — the browser sets its
+  // own multipart boundary, which a fixed "application/json" would break.
+  const isFormData = init?.body instanceof FormData;
+
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
     headers: {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       ...init?.headers,
     },

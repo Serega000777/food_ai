@@ -3,7 +3,12 @@
   "compilerOptions": {
     "outDir": "./dist",
     "baseUrl": "./",
-    "incremental": true
+    "incremental": true,
+    // "multer" isn't imported anywhere directly — @nestjs/platform-express's
+    // FileInterceptor uses it internally — so its `Express.Multer.File` global
+    // augmentation needs listing explicitly (the base config's `types` already
+    // narrows automatic inclusion to just "node").
+    "types": ["node", "multer"]
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist", "**/*.spec.ts"]

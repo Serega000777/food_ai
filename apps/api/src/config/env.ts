@@ -9,6 +9,15 @@ const envSchema = z.object({
   // Signs short-lived access JWTs. Refresh tokens are opaque random strings, hashed at
   // rest (see SessionsService) — they need no signing secret of their own.
   JWT_ACCESS_SECRET: z.string().min(32),
+  // Phase 4 (ADR 0011/0012): queue + private object storage for meal photos.
+  REDIS_URL: z.string().url(),
+  S3_ENDPOINT: z.string().url(),
+  S3_BUCKET: z.string().min(1),
+  S3_ACCESS_KEY_ID: z.string().min(1),
+  S3_SECRET_ACCESS_KEY: z.string().min(1),
+  S3_REGION: z.string().default("us-east-1"),
+  // "mock" until a real provider is chosen after a benchmark (ADR 0013).
+  AI_PROVIDER_PRIMARY: z.enum(["mock"]).default("mock"),
 });
 
 export type Env = z.infer<typeof envSchema>;

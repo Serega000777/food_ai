@@ -6,6 +6,8 @@ import type {
   DiaryResponse,
   Food,
   Goal,
+  MealAnalysisResponse,
+  MealType,
   MeResponse,
   MealEntryDto,
   UpdateMealInput,
@@ -77,4 +79,31 @@ export function deleteMeal(id: string): Promise<void> {
 
 export function getDiary(date?: string): Promise<DiaryResponse> {
   return apiRequest<DiaryResponse>(`/v1/diary${date ? `?date=${date}` : ""}`);
+}
+
+export function uploadMealPhoto(file: Blob): Promise<MealAnalysisResponse> {
+  const formData = new FormData();
+  formData.append("photo", file, "meal.jpg");
+  return apiRequest<MealAnalysisResponse>("/v1/meals/photo", { method: "POST", body: formData });
+}
+
+export function getMealAnalysis(id: string): Promise<MealAnalysisResponse> {
+  return apiRequest<MealAnalysisResponse>(`/v1/meal-analyses/${id}`);
+}
+
+export function refineMealAnalysis(
+  id: string,
+  correctionText: string,
+): Promise<MealAnalysisResponse> {
+  return apiRequest<MealAnalysisResponse>(`/v1/meal-analyses/${id}/refine`, {
+    method: "POST",
+    body: JSON.stringify({ correctionText }),
+  });
+}
+
+export function confirmMealAnalysis(id: string, mealType: MealType): Promise<MealEntryDto> {
+  return apiRequest<MealEntryDto>(`/v1/meal-analyses/${id}/confirm`, {
+    method: "POST",
+    body: JSON.stringify({ mealType }),
+  });
 }

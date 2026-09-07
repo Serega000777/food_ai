@@ -52,17 +52,17 @@ wearables-интеграций, автообучение моделей на п�
 
 ## Фазы реализации (master prompt §40)
 
-| Фаза | Состав                                                                                               | Статус |
-| ---- | ---------------------------------------------------------------------------------------------------- | ------ |
-| 0    | Repo audit, monorepo bootstrap, CI, ADR, backend-скелет + health-check                               | ✅     |
-| 1    | DB, миграции, User/Profile/Goal, Telegram auth, session, `/me`                                       | ✅     |
-| 2    | Onboarding API/UI, стартовый расчёт цели, Home shell, навигация Mini App                             | ✅\*   |
-| 3    | Food/Nutrition Engine, ручной ввод еды, Diary, dashboard totals                                      | ✅\*\* |
-| 4    | Object storage, upload, AIAnalysis state machine, очередь, mock VisionProvider, AI Result UI         | —      |
-| 5    | Первый реальный AI-провайдер, structured output, matching, Confidence Engine, hidden-calorie вопросы | —      |
-| 6    | Recent/frequent meals, WeightLog, progress, analytics events                                         | —      |
-| 7    | Hardening: observability, security review, e2e, accessibility, error UX                              | —      |
-| 8    | Monetization shell: EntitlementService, paywall после magic moment                                   | —      |
+| Фаза | Состав                                                                                       | Статус   |
+| ---- | -------------------------------------------------------------------------------------------- | -------- |
+| 0    | Repo audit, monorepo bootstrap, CI, ADR, backend-скелет + health-check                       | ✅       |
+| 1    | DB, миграции, User/Profile/Goal, Telegram auth, session, `/me`                               | ✅       |
+| 2    | Onboarding API/UI, стартовый расчёт цели, Home shell, навигация Mini App                     | ✅\*     |
+| 3    | Food/Nutrition Engine, ручной ввод еды, Diary, dashboard totals                              | ✅\*\*   |
+| 4    | Object storage, upload, AIAnalysis state machine, очередь, mock VisionProvider, AI Result UI | ✅\*\*\* |
+| 5    | Первый реальный AI-провайдер (замена mock, тот же pipeline)                                  | —        |
+| 6    | Recent/frequent meals, WeightLog, progress, analytics events                                 | —        |
+| 7    | Hardening: observability, security review, e2e, accessibility, error UX                      | —        |
+| 8    | Monetization shell: EntitlementService, paywall после magic moment                           | —        |
 
 \* Bottom navigation появилась в Phase 3 вместе с Дневником: Сегодня / + / Дневник.
 Прогресс и AI по-прежнему скрыты — раньше это были бы вкладки на несуществующий
@@ -71,6 +71,12 @@ wearables-интеграций, автообучение моделей на п�
 
 \*\* Без `DailySummary`/`FoodNutrient` таблиц — итоги считаются на лету, микронутриенты
 не хранятся (ADR 0010, сознательное упрощение, не забытая работа).
+
+\*\*\* Matching, Confidence Engine, hidden-calorie-риск и refine через текст — то, что
+master prompt §40 формально относит к Phase 5 — уже построены и протестированы в
+Phase 4 на mock-провайдере (ADR 0013): без этого "AI Result UI end-to-end с mock"
+и "correction/confirm" из самого Phase 4 не имели бы смысла. Phase 5 теперь — только
+подключение реального провайдера вместо mock, тот же pipeline.
 
 **STOP MVP здесь**, если явно не попросили продолжать. Дальше: 1.1 voice/barcode/recipes,
 1.2 Personal Food Memory + Weekly AI Report + AI Coach, 1.3 Adaptive Energy Expenditure,

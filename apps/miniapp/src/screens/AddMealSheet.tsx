@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 
 import { createMeal, searchFoods } from "../api/endpoints";
 
+import { PhotoMealFlow } from "./PhotoMealFlow";
+
 const MEAL_TYPE_OPTIONS: Array<{ value: MealType; label: string }> = [
   { value: "BREAKFAST", label: "Завтрак" },
   { value: "LUNCH", label: "Обед" },
@@ -13,7 +15,9 @@ const MEAL_TYPE_OPTIONS: Array<{ value: MealType; label: string }> = [
 
 const SEARCH_DEBOUNCE_MS = 250;
 
-export function AddMealSheet({ onClose, onAdded }: { onClose: () => void; onAdded: () => void }) {
+type Mode = "choose" | "search" | "photo";
+
+function SearchMealFlow({ onClose, onAdded }: { onClose: () => void; onAdded: () => void }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Food[]>([]);
   const [selected, setSelected] = useState<Food | null>(null);
@@ -52,7 +56,7 @@ export function AddMealSheet({ onClose, onAdded }: { onClose: () => void; onAdde
   return (
     <div className="sheet-overlay" onClick={onClose}>
       <div className="sheet" onClick={(e) => e.stopPropagation()}>
-        <p className="title">Добавить еду</p>
+        <p className="title">Найти продукт</p>
 
         {!selected ? (
           <>
@@ -112,6 +116,32 @@ export function AddMealSheet({ onClose, onAdded }: { onClose: () => void; onAdde
           </>
         )}
 
+        <button className="back-link" onClick={onClose}>
+          Отмена
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function AddMealSheet({ onClose, onAdded }: { onClose: () => void; onAdded: () => void }) {
+  const [mode, setMode] = useState<Mode>("choose");
+
+  if (mode === "photo") return <PhotoMealFlow onClose={onClose} onAdded={onAdded} />;
+  if (mode === "search") return <SearchMealFlow onClose={onClose} onAdded={onAdded} />;
+
+  return (
+    <div className="sheet-overlay" onClick={onClose}>
+      <div className="sheet" onClick={(e) => e.stopPropagation()}>
+        <p className="title">Добавить еду</p>
+        <div className="option-list">
+          <button className="option-card" onClick={() => setMode("photo")}>
+            📷 Сфотографировать
+          </button>
+          <button className="option-card" onClick={() => setMode("search")}>
+            🔍 Найти вручную
+          </button>
+        </div>
         <button className="back-link" onClick={onClose}>
           Отмена
         </button>

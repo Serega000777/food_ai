@@ -6,4 +6,5 @@ export * from "./food";
 export * from "./goal";
 export * from "./macros";
 export * from "./meal";
+export * from "./meal-analysis";
 export * from "./user";
