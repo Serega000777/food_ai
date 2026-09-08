@@ -10,7 +10,7 @@ packages/
   contracts/      Zod-схемы + типы, общие для api и клиентов (ADR 0005)
   domain/         чистые доменные правила (ADR 0008: initial goal formula; confidence engine)
   nutrition/      per-100g→граммы конвертации, суммирование БЖУ (ADR 0010)
-  ai/             VisionProvider-контракт + deterministic mock (ADR 0013)
+  ai/             VisionProvider-контракт: deterministic mock + Gemini (ADR 0013, ADR 0014)
   ui-tokens/      design tokens — CSS custom properties (ADR 0009)
   config/         общий tsconfig/eslint/prettier
 infrastructure/
@@ -46,7 +46,9 @@ IMAGE/TEXT → AI extracts foods + portion + confidence
 ```
 
 **Photo analysis state machine** (технический документ §14, реализовано в Phase 4 на
-mock-провайдере, ADR 0013): `POST /v1/meals/photo` загружает и валидирует фото
+mock-провайдере, ADR 0013; реальный `VisionProvider` — Gemini, Phase 5, ADR 0014,
+выбирается через `AI_PROVIDER_PRIMARY`, по умолчанию всё ещё `mock`): `POST
+/v1/meals/photo` загружает и валидирует фото
 синхронно (ADR 0011), поэтому `DRAFT`/`UPLOADING`/`UPLOAD_FAILED` объявлены в схеме
 для полноты, но не достижимы при текущей стратегии загрузки — запись создаётся сразу
 в `QUEUED`:

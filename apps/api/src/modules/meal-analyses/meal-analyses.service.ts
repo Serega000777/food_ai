@@ -196,6 +196,7 @@ export class MealAnalysesService {
           userId,
           objectKey,
           thumbnailKey,
+          mimeType,
           width: metadata.width ?? 0,
           height: metadata.height ?? 0,
           hash,
@@ -225,8 +226,12 @@ export class MealAnalysesService {
   }
 
   /** Runs on the BullMQ worker (AnalyzeMealPhotoProcessor) — never called from an HTTP
-   * handler directly, so provider latency never blocks a request (ADR 0012). */
-  async runAnalysis(analysisId: string): Promise<void> {
+   * handler directly, so provider latency never blocks a request (ADR 0012).
+   * `isFinalAttempt` comes from the job's own attempt count: a real provider (Gemini)
+   * can fail transiently (timeout, rate limit), so only the last retry should mark the
+   * analysis ANALYSIS_FAILED in the DB — earlier failures rethrow so BullMQ retries them
+   * silently, without ever showing the user a failure they didn't actually hit (ADR 0014). */
+  async runAnalysis(analysisId: string, isFinalAttempt = true): Promise<void> {
     const [analysis] = await this.db.select().from(aiAnalyses).where(eq(aiAnalyses.id, analysisId));
     if (!analysis) {
       this.logger.warn(`runAnalysis: analysis ${analysisId} no longer exists, skipping`);
@@ -251,7 +256,7 @@ export class MealAnalysesService {
       const imageBuffer = await this.storage.getObjectBuffer(photo.objectKey);
       const context = await this.buildContext(analysis.userId);
       const rawResult = await this.provider.analyzeMeal(
-        { buffer: imageBuffer, mimeType: "image/jpeg" },
+        { buffer: imageBuffer, mimeType: photo.mimeType },
         context,
       );
       // Never trusts a provider's output without validating it first (ADR 0005,
@@ -284,7 +289,16 @@ export class MealAnalysesService {
       // Full detail server-side only — the client (and this column) get a safe,
       // generic reason (master prompt §36).
       const stack = error instanceof Error ? error.stack : String(error);
-      this.logger.error(`Analysis ${analysisId} failed`, stack);
+
+      if (!isFinalAttempt) {
+        this.logger.warn(`Analysis ${analysisId} failed, will retry`, stack);
+        // Rethrow (not swallow) so BullMQ registers the attempt as failed and retries
+        // it with backoff — leaving status at ANALYZING is fine, the next attempt
+        // overwrites it either way.
+        throw error;
+      }
+
+      this.logger.error(`Analysis ${analysisId} failed on final attempt`, stack);
       await this.db
         .update(aiAnalyses)
         .set({

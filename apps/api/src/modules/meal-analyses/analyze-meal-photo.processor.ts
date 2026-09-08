@@ -14,6 +14,8 @@ export class AnalyzeMealPhotoProcessor extends WorkerHost {
   }
 
   async process(job: Job<AnalyzeMealPhotoJobData>): Promise<void> {
-    await this.mealAnalyses.runAnalysis(job.data.analysisId);
+    const maxAttempts = job.opts.attempts ?? 1;
+    const isFinalAttempt = job.attemptsMade + 1 >= maxAttempts;
+    await this.mealAnalyses.runAnalysis(job.data.analysisId, isFinalAttempt);
   }
 }

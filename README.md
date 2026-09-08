@@ -13,7 +13,7 @@ platform-agnostic, чтобы iOS/Android позже подключились к
 - **Client**: React + Vite Telegram Mini App (ADR 0009); native (Expo/React Native) позже на том же API.
 - **Monorepo**: pnpm workspaces + Turborepo (ADR 0002).
 - **Shared**: `packages/contracts` (Zod-схемы и типы, ADR 0005), `packages/domain` (Goal formula + Confidence Engine, ADR 0008),
-  `packages/nutrition` (граммы → БЖУ, ADR 0010), `packages/ai` (VisionProvider + mock, ADR 0013), `packages/ui-tokens`, `packages/config`.
+  `packages/nutrition` (граммы → БЖУ, ADR 0010), `packages/ai` (VisionProvider: mock + Gemini, ADR 0013, ADR 0014), `packages/ui-tokens`, `packages/config`.
 - **Фото/очередь**: Redis + BullMQ, MinIO (S3-compatible) — добавлены в Phase 4, ровно
   когда появился реальный кейс (ADR 0006, ADR 0011, ADR 0012).
 
@@ -24,6 +24,9 @@ platform-agnostic, чтобы iOS/Android позже подключились к
 ```bash
 pnpm install
 cp .env.example .env        # заполните TELEGRAM_BOT_TOKEN, JWT_ACCESS_SECRET
+                             # AI_PROVIDER_PRIMARY=mock по умолчанию; для реального
+                             # Gemini поставьте =gemini и заполните GEMINI_API_KEY
+                             # (бесплатный ключ: https://aistudio.google.com/apikey)
 pnpm docker:up               # поднимает Postgres, Redis, MinIO в Docker
 pnpm db:migrate                # применяет миграции
 pnpm db:seed                     # стартовый каталог продуктов для ручного ввода
@@ -67,7 +70,7 @@ packages/
   contracts/      Zod-схемы и типы, общие для api и клиентов
   domain/         чистые доменные правила (initial goal formula, confidence engine)
   nutrition/      per-100g→граммы, суммирование БЖУ — детерминированные, unit-tested
-  ai/             VisionProvider-контракт + deterministic mock (ADR 0013)
+  ai/             VisionProvider-контракт: deterministic mock + Gemini (ADR 0013, ADR 0014)
   ui-tokens/      design tokens (CSS custom properties)
   config/         общие tsconfig/eslint/prettier
 infrastructure/
@@ -85,7 +88,8 @@ docs/
 - LLM/vision-модель не является источником пищевой ценности — только AI Vision → Nutrition
   Engine → структурированный результат (ADR 0005, master prompt §7).
 - Бизнес-логика не зависит от конкретного AI-провайдера или nutrition-датасета — только
-  от интерфейсов-адаптеров `VisionProvider` / `FoodDataProvider` (ADR 0001, ADR 0013).
+  от интерфейсов-адаптеров `VisionProvider` / `FoodDataProvider` (ADR 0001, ADR 0013,
+  ADR 0014).
 - AI-провайдера ответ всегда проходит runtime-валидацию (`parseMealVisionResult`) перед
   тем, как ему доверять (ADR 0005, AT-010).
 - Redis/очереди/S3 не добавляются "про запас" — только когда появляется реальный кейс

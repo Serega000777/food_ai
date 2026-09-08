@@ -1,0 +1,1 @@
+ALTER TABLE "meal_photos" ADD COLUMN "mime_type" text NOT NULL;

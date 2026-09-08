@@ -1,4 +1,4 @@
-import { MockVisionProvider, type VisionProvider } from "@food-ai/ai";
+import { GeminiVisionProvider, MockVisionProvider, type VisionProvider } from "@food-ai/ai";
 import { Global, Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
@@ -21,6 +21,12 @@ import { VISION_PROVIDER } from "./vision-provider.token";
         switch (provider) {
           case "mock":
             return new MockVisionProvider();
+          case "gemini":
+            // env.ts's refine() guarantees GEMINI_API_KEY is set whenever this branch runs.
+            return new GeminiVisionProvider({
+              apiKey: config.get("GEMINI_API_KEY", { infer: true }) as string,
+              model: config.get("GEMINI_MODEL", { infer: true }),
+            });
         }
       },
     },
