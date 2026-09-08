@@ -3,16 +3,7 @@ import { useEffect, useState } from "react";
 
 import { deleteMeal, getDiary } from "../api/endpoints";
 import { MealCard } from "../components/MealCard";
-
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function shiftDate(date: string, days: number): string {
-  const d = new Date(`${date}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
-}
+import { shiftDate, todayIso } from "../utils/date";
 
 export function Diary({ onChanged }: { onChanged: () => void }) {
   const [date, setDate] = useState(todayIso());
