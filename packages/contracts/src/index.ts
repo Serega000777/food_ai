@@ -7,4 +7,7 @@ export * from "./goal";
 export * from "./macros";
 export * from "./meal";
 export * from "./meal-analysis";
+export * from "./progress";
+export * from "./recent-meal";
 export * from "./user";
+export * from "./weight";

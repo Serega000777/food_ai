@@ -1,7 +1,7 @@
-import type { Food, MealType } from "@food-ai/contracts";
+import type { Food, MealType, RecentMealDto } from "@food-ai/contracts";
 import { useEffect, useState } from "react";
 
-import { createMeal, searchFoods } from "../api/endpoints";
+import { createMeal, getRecentMeals, repeatMeal, searchFoods } from "../api/endpoints";
 
 import { PhotoMealFlow } from "./PhotoMealFlow";
 
@@ -15,7 +15,70 @@ const MEAL_TYPE_OPTIONS: Array<{ value: MealType; label: string }> = [
 
 const SEARCH_DEBOUNCE_MS = 250;
 
-type Mode = "choose" | "search" | "photo";
+type Mode = "choose" | "search" | "photo" | "recent";
+
+/** Repeat flow (master prompt §19/§14, US-009): pick a past meal, confirm in one tap —
+ * never auto-logs, the tap itself is the confirmation. */
+function RecentMealsFlow({ onClose, onAdded }: { onClose: () => void; onAdded: () => void }) {
+  const [meals, setMeals] = useState<RecentMealDto[] | null>(null);
+  const [repeatingId, setRepeatingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getRecentMeals()
+      .then(setMeals)
+      .catch(() => setMeals([]));
+  }, []);
+
+  async function handleRepeat(sourceMealId: string) {
+    setRepeatingId(sourceMealId);
+    setError(null);
+    try {
+      await repeatMeal({ sourceMealId });
+      onAdded();
+    } catch {
+      setError("Не получилось повторить приём пищи.");
+      setRepeatingId(null);
+    }
+  }
+
+  return (
+    <div className="sheet-overlay" onClick={onClose}>
+      <div className="sheet" onClick={(e) => e.stopPropagation()}>
+        <p className="title">Недавние приёмы пищи</p>
+
+        {meals === null && <p className="subtitle">Загрузка...</p>}
+        {meals?.length === 0 && (
+          <p className="subtitle">
+            Пока нет истории — добавь первый приём пищи вручную или по фото.
+          </p>
+        )}
+        <div className="option-list">
+          {meals?.map((meal) => (
+            <button
+              key={meal.id}
+              className="option-card"
+              disabled={repeatingId !== null}
+              onClick={() => void handleRepeat(meal.id)}
+            >
+              <strong>{meal.items.map((item) => item.displayName).join(", ")}</strong>
+              <div className="subtitle">
+                {Math.round(meal.totalCalories)} ккал
+                {meal.timesEaten > 1 ? ` · ${meal.timesEaten} раз` : ""}
+                {repeatingId === meal.id ? " · повторяем..." : ""}
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {error && <p className="error-text">{error}</p>}
+        <button className="back-link" onClick={onClose}>
+          Отмена
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function SearchMealFlow({ onClose, onAdded }: { onClose: () => void; onAdded: () => void }) {
   const [query, setQuery] = useState("");
@@ -129,6 +192,7 @@ export function AddMealSheet({ onClose, onAdded }: { onClose: () => void; onAdde
 
   if (mode === "photo") return <PhotoMealFlow onClose={onClose} onAdded={onAdded} />;
   if (mode === "search") return <SearchMealFlow onClose={onClose} onAdded={onAdded} />;
+  if (mode === "recent") return <RecentMealsFlow onClose={onClose} onAdded={onAdded} />;
 
   return (
     <div className="sheet-overlay" onClick={onClose}>
@@ -140,6 +204,9 @@ export function AddMealSheet({ onClose, onAdded }: { onClose: () => void; onAdde
           </button>
           <button className="option-card" onClick={() => setMode("search")}>
             🔍 Найти вручную
+          </button>
+          <button className="option-card" onClick={() => setMode("recent")}>
+            🔁 Повторить недавнее
           </button>
         </div>
         <button className="back-link" onClick={onClose}>

@@ -30,6 +30,7 @@ import {
   users,
 } from "../../db/schema";
 import { VISION_PROVIDER } from "../ai/vision-provider.token";
+import { AnalyticsService } from "../analytics/analytics.service";
 import { MealsService } from "../meals/meals.service";
 import { ANALYZE_MEAL_PHOTO_QUEUE, type AnalyzeMealPhotoJobData } from "../queue/queue.constants";
 import { ObjectStorageService } from "../storage/object-storage.service";
@@ -78,6 +79,7 @@ export class MealAnalysesService {
     @InjectQueue(ANALYZE_MEAL_PHOTO_QUEUE) private readonly queue: Queue<AnalyzeMealPhotoJobData>,
     private readonly storage: ObjectStorageService,
     private readonly meals: MealsService,
+    private readonly analytics: AnalyticsService,
   ) {}
 
   private async buildContext(userId: string): Promise<PersonalContext> {
@@ -351,7 +353,7 @@ export class MealAnalysesService {
     const refined = parseMealVisionResult(rawRefined);
     const matched = await matchAndDecideItems(this.db, refined.items);
 
-    return this.db.transaction(async (tx) => {
+    const result = await this.db.transaction(async (tx) => {
       // Before/after preserved, never overwritten in place (master prompt §16, AT-012).
       await tx.insert(corrections).values({
         userId,
@@ -383,6 +385,11 @@ export class MealAnalysesService {
 
       return this.buildResponse(updatedAnalysis, photo, insertedCandidates);
     });
+
+    // Type only — never the free-text correctionText itself (master prompt §28: no
+    // full meal text/photo in analytics).
+    this.analytics.track(userId, { type: "meal_corrected", properties: { analysisId } });
+    return result;
   }
 
   /** Idempotent — confirming an already-confirmed analysis returns the existing meal

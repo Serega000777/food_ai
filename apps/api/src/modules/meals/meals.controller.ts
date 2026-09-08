@@ -1,8 +1,10 @@
 import {
   createMealSchema,
+  repeatMealSchema,
   updateMealSchema,
   type CreateMealInput,
   type MealEntryDto,
+  type RepeatMealInput,
   type UpdateMealInput,
 } from "@food-ai/contracts";
 import {
@@ -38,6 +40,15 @@ export class MealsController {
     @Headers("idempotency-key") idempotencyKey?: string,
   ): Promise<MealEntryDto> {
     return this.meals.create(user.id, body, idempotencyKey);
+  }
+
+  @HttpCode(HttpStatus.CREATED)
+  @Post("repeat")
+  repeat(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(repeatMealSchema)) body: RepeatMealInput,
+  ): Promise<MealEntryDto> {
+    return this.meals.repeat(user.id, body);
   }
 
   @Patch(":id")

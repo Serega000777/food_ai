@@ -2,16 +2,22 @@ import type {
   CreateMealInput,
   MealEntryDto,
   MealItemDto,
+  RecentMealDto,
+  RepeatMealInput,
   UpdateMealInput,
 } from "@food-ai/contracts";
 import { nutrientsForGrams, sumMacros, type Macros } from "@food-ai/nutrition";
 import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 
 import type { Database } from "../../db/client";
 import { DATABASE } from "../../db/database.token";
 import { firstOrThrow } from "../../db/first-or-throw";
 import { foods, idempotencyKeys, mealEntries, mealItems } from "../../db/schema";
+import { AnalyticsService } from "../analytics/analytics.service";
+
+const RECENT_MEALS_SCAN_LIMIT = 50;
+const RECENT_MEALS_LIMIT = 10;
 
 type FoodRow = typeof foods.$inferSelect;
 type MealEntryRow = typeof mealEntries.$inferSelect;
@@ -71,7 +77,10 @@ function macrosToColumns(macros: Macros) {
 
 @Injectable()
 export class MealsService {
-  constructor(@Inject(DATABASE) private readonly db: Database) {}
+  constructor(
+    @Inject(DATABASE) private readonly db: Database,
+    private readonly analytics: AnalyticsService,
+  ) {}
 
   /** Resolves and validates every referenced food up front — never inserts a meal item
    * whose grams/calories can't actually be computed server-side (master prompt §6:
@@ -121,12 +130,13 @@ export class MealsService {
   /** `idempotencyKey`, when the client sends one, makes a retried request return the
    * original meal instead of creating a second one (technical spec §24, AT-015).
    * `source` defaults to MANUAL; MealAnalysesService passes PHOTO when confirming an
-   * AI analysis through this same, already-correct nutrition-computation path. */
+   * AI analysis, and `repeat()` below passes REPEAT, through this same,
+   * already-correct nutrition-computation path. */
   async create(
     userId: string,
     input: CreateMealInput,
     idempotencyKey?: string,
-    source: "MANUAL" | "PHOTO" = "MANUAL",
+    source: "MANUAL" | "PHOTO" | "REPEAT" = "MANUAL",
   ): Promise<MealEntryDto> {
     if (idempotencyKey) {
       const existing = await this.findByIdempotencyKey(userId, idempotencyKey);
@@ -139,7 +149,7 @@ export class MealsService {
     const total = sumMacros(itemSnapshots.map((s) => s.macros));
     const eatenAt = input.eatenAt ? new Date(input.eatenAt) : new Date();
 
-    return this.db.transaction(async (tx) => {
+    const meal = await this.db.transaction(async (tx) => {
       const entry = firstOrThrow(
         await tx
           .insert(mealEntries)
@@ -197,6 +207,9 @@ export class MealsService {
         .where(eq(mealItems.mealEntryId, winnerEntry.id));
       return toMealEntryDto(winnerEntry, winnerItems);
     });
+
+    this.analytics.track(userId, { type: "meal_confirmed", properties: { source } });
+    return meal;
   }
 
   async getById(userId: string, mealId: string): Promise<MealEntryDto> {
@@ -277,5 +290,109 @@ export class MealsService {
   async delete(userId: string, mealId: string): Promise<void> {
     await this.requireOwnedEntry(userId, mealId);
     await this.db.delete(mealEntries).where(eq(mealEntries.id, mealId)); // cascades to items
+  }
+
+  /** "Recent/frequent" (master prompt §19) as one grouping pass over the last
+   * `RECENT_MEALS_SCAN_LIMIT` entries — the signature is the sorted set of matched
+   * food ids, so eating the same combo at slightly different gram amounts still counts
+   * as one repeatable "recent meal", using its most recent occurrence as the template.
+   * No separate Personal Food Memory table yet — that's explicitly later work. */
+  async getRecentMeals(userId: string): Promise<RecentMealDto[]> {
+    const entries = await this.db
+      .select()
+      .from(mealEntries)
+      .where(eq(mealEntries.userId, userId))
+      .orderBy(desc(mealEntries.eatenAt))
+      .limit(RECENT_MEALS_SCAN_LIMIT);
+    if (entries.length === 0) return [];
+
+    const items = await this.db
+      .select()
+      .from(mealItems)
+      .where(
+        inArray(
+          mealItems.mealEntryId,
+          entries.map((entry) => entry.id),
+        ),
+      );
+    const itemsByEntryId = new Map<string, MealItemRow[]>();
+    for (const item of items) {
+      const group = itemsByEntryId.get(item.mealEntryId) ?? [];
+      group.push(item);
+      itemsByEntryId.set(item.mealEntryId, group);
+    }
+
+    const bySignature = new Map<
+      string,
+      { entry: MealEntryRow; items: MealItemRow[]; count: number }
+    >();
+    for (const entry of entries) {
+      // entries is already ordered most-recent-first, so the first entry seen per
+      // signature is the one to use as the repeatable template.
+      const entryItems = itemsByEntryId.get(entry.id) ?? [];
+      const foodIds = entryItems
+        .map((item) => item.foodId)
+        .filter((id): id is string => id !== null);
+      if (foodIds.length !== entryItems.length) continue; // an unmatched item can't be repeated safely
+      const signature = [...foodIds].sort().join(",");
+      if (!signature) continue;
+
+      const existing = bySignature.get(signature);
+      if (existing) existing.count += 1;
+      else bySignature.set(signature, { entry, items: entryItems, count: 1 });
+    }
+
+    return [...bySignature.values()]
+      .sort((a, b) => b.entry.eatenAt.getTime() - a.entry.eatenAt.getTime())
+      .slice(0, RECENT_MEALS_LIMIT)
+      .map(({ entry, items: entryItems, count }): RecentMealDto => ({
+        id: entry.id,
+        mealType: entry.mealType,
+        items: entryItems.map(toMealItemDto),
+        totalCalories: Number(entry.totalCalories),
+        proteinG: Number(entry.proteinG),
+        fatG: Number(entry.fatG),
+        carbsG: Number(entry.carbsG),
+        lastEatenAt: entry.eatenAt.toISOString(),
+        timesEaten: count,
+      }));
+  }
+
+  /** Repeats a past meal in 1-2 taps (US-009) — copies `sourceMealId`'s items through
+   * the normal `create()` path (never trusts the old snapshot's totals directly, since
+   * a food's nutrient data could have changed since) and records it as its own
+   * REPEAT-sourced entry, never mutating or re-dating the original. */
+  async repeat(userId: string, input: RepeatMealInput): Promise<MealEntryDto> {
+    const source = await this.requireOwnedEntry(userId, input.sourceMealId);
+    const sourceItems = await this.db
+      .select()
+      .from(mealItems)
+      .where(eq(mealItems.mealEntryId, source.id));
+
+    const unmatched = sourceItems.filter((item) => !item.foodId);
+    if (unmatched.length > 0) {
+      throw new BadRequestException("This meal has items that can no longer be repeated directly");
+    }
+
+    const meal = await this.create(
+      userId,
+      {
+        mealType: input.mealType ?? source.mealType,
+        eatenAt: input.eatenAt,
+        items: sourceItems.map((item) => ({
+          foodId: item.foodId as string,
+          grams: Number(item.grams),
+        })),
+      },
+      undefined,
+      "REPEAT",
+    );
+
+    this.analytics.track(userId, {
+      type: "recent_meal_repeated",
+      properties: { sourceMealId: source.id },
+    });
+
+    return meal;
   }
 }

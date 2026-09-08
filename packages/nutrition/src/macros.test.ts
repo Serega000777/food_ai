@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { nutrientsForGrams, roundMacros, subtractMacros, sumMacros, type Macros } from "./macros";
+import {
+  averageMacros,
+  nutrientsForGrams,
+  roundMacros,
+  subtractMacros,
+  sumMacros,
+  type Macros,
+} from "./macros";
 
 const chickenPer100g: Macros = { calories: 165, proteinG: 31, fatG: 3.6, carbsG: 0 };
 
@@ -62,6 +69,28 @@ describe("subtractMacros", () => {
       fatG: 40,
       carbsG: 110,
     });
+  });
+});
+
+describe("averageMacros", () => {
+  it("divides the sum by the given day count, not the item count", () => {
+    // Two logged days, one of which had two meals — averaging by item count (3) would
+    // understate a day that happened to have more entries.
+    const items: Macros[] = [
+      { calories: 600, proteinG: 40, fatG: 20, carbsG: 60 },
+      { calories: 600, proteinG: 40, fatG: 20, carbsG: 60 },
+      { calories: 800, proteinG: 50, fatG: 25, carbsG: 80 },
+    ];
+    expect(averageMacros(items, 2)).toEqual({
+      calories: 1000,
+      proteinG: 65,
+      fatG: 32.5,
+      carbsG: 100,
+    });
+  });
+
+  it("returns all zeros when there are no logged days, without dividing by zero", () => {
+    expect(averageMacros([], 0)).toEqual({ calories: 0, proteinG: 0, fatG: 0, carbsG: 0 });
   });
 });
 

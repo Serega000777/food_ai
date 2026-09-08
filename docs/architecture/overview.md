@@ -11,6 +11,7 @@ packages/
   domain/         чистые доменные правила (ADR 0008: initial goal formula; confidence engine)
   nutrition/      per-100g→граммы конвертации, суммирование БЖУ (ADR 0010)
   ai/             VisionProvider-контракт: deterministic mock + Gemini (ADR 0013, ADR 0014)
+  analytics/      типы событий продуктовой аналитики (ADR 0015), появился в Phase 6
   ui-tokens/      design tokens — CSS custom properties (ADR 0009)
   config/         общий tsconfig/eslint/prettier
 infrastructure/
@@ -18,8 +19,8 @@ infrastructure/
   migrations/     SQL-миграции Drizzle
 ```
 
-Пакеты `analytics`, `test-utils` — целевая структура (master prompt §4), создаются
-вместе с фазой, которой они реально нужны. Telegram initData verification
+Пакет `test-utils` — целевая структура (master prompt §4), создаётся вместе с фазой,
+которой он реально нужен. Telegram initData verification
 (`apps/api/src/modules/auth/telegram-init-data.ts`) намеренно НЕ вынесен в отдельный
 `packages/telegram` — единственный потребитель сейчас apps/api; вынесение оправдано,
 когда появится второй потребитель (например, admin), не раньше.
@@ -68,14 +69,31 @@ analysis возвращает существующий meal (AT-004).
 считаются на лету суммированием `meal_entries`, без отдельной кэш-таблицы (ADR 0010) —
 как и без отдельной таблицы микронутриентов.
 
+**Recent meals + repeat** (Phase 6, master prompt §19, ADR 0015) — `GET
+/v1/recent-meals` группирует последние 50 `meal_entries` пользователя по набору
+`foodId` (без отдельной Personal Food Memory таблицы — это осознанно более поздняя
+работа); `POST /v1/meals/repeat` копирует продукты найденной группы через тот же
+`MealsService.create()`, что и ручной ввод, с `source: "REPEAT"`.
+
+**Weight + Progress** (Phase 6, master prompt §20, ADR 0015) — `POST /v1/weights`
+обновляет запись за текущий локальный день, если она уже есть (вместо второго
+эндпоинта для "edit"). `GET /v1/progress` считает средние КБЖУ за диапазон, деля не на
+все дни диапазона, а только на дни, где реально был залогирован хотя бы один приём
+пищи — иначе пропущенный день ложно занижает среднее.
+
+**Product analytics** (Phase 6, master prompt §28, ADR 0015) — `analytics_events`,
+первосортная таблица (не PostHog/Segment), типы событий — `packages/analytics`.
+Запись — fire-and-forget (`AnalyticsService.track`), никогда не блокирует и не ломает
+действие пользователя, к которому событие привязано.
+
 ## Инфраструктура (ADR 0006, ADR 0011, ADR 0012)
 
-| Сервис                        | С какой фазы | Назначение                                           |
-| ----------------------------- | ------------ | ---------------------------------------------------- |
-| Postgres                      | Phase 0      | основное хранилище                                   |
-| Redis + BullMQ                | Phase 4      | очередь `analyze-meal-photo`, bounded retries        |
-| MinIO (S3-compatible)         | Phase 4      | приватное хранилище фото + миниатюр                  |
-| in-memory `@nestjs/throttler` | Phase 0      | rate limiting (один инстанс API — достаточно на MVP) |
+| Сервис                        | С какой фазы | Назначение                                               |
+| ----------------------------- | ------------ | -------------------------------------------------------- |
+| Postgres                      | Phase 0      | основное хранилище (включая `analytics_events`, Phase 6) |
+| Redis + BullMQ                | Phase 4      | очередь `analyze-meal-photo`, bounded retries            |
+| MinIO (S3-compatible)         | Phase 4      | приватное хранилище фото + миниатюр                      |
+| in-memory `@nestjs/throttler` | Phase 0      | rate limiting (один инстанс API — достаточно на MVP)     |
 
 Ничего не добавлено "про запас" — каждый сервис появился в фазе, которая начала его
 реально использовать.

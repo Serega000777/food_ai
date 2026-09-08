@@ -43,6 +43,21 @@ export function subtractMacros(a: Macros, b: Macros): Macros {
   };
 }
 
+/** Divides a sum by a caller-supplied day count rather than `items.length` — Progress
+ * averages over days that actually have a logged meal, not every day in the requested
+ * range, so missed days don't silently drag the average down (master prompt §20's "No
+ * shame" principle: a gap in logging shouldn't read as "you barely ate"). */
+export function averageMacros(items: Macros[], days: number): Macros {
+  if (days <= 0) return { calories: 0, proteinG: 0, fatG: 0, carbsG: 0 };
+  const total = sumMacros(items);
+  return {
+    calories: total.calories / days,
+    proteinG: total.proteinG / days,
+    fatG: total.fatG / days,
+    carbsG: total.carbsG / days,
+  };
+}
+
 /** The one place rounding happens — call this at the API/UI boundary, never earlier. */
 export function roundMacros(macros: Macros): Macros {
   return {

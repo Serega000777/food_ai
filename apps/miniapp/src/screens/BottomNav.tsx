@@ -1,7 +1,7 @@
-export type Tab = "home" | "diary";
+export type Tab = "home" | "diary" | "progress";
 
-/** Only Сегодня/Дневник/+ — Прогресс and AI tabs join once Phase 6 gives them
- * something real to show (master prompt §13: no fake screens for missing features). */
+/** AI tab still joins later (master prompt §13: no fake screens for missing features)
+ * — Progress has something real to show as of Phase 6. */
 export function BottomNav({
   active,
   onSelect,
@@ -19,14 +19,20 @@ export function BottomNav({
       >
         Сегодня
       </button>
-      <button className="nav-add" onClick={onAdd} aria-label="Добавить еду">
-        +
-      </button>
       <button
         className={`nav-item${active === "diary" ? " active" : ""}`}
         onClick={() => onSelect("diary")}
       >
         Дневник
+      </button>
+      <button className="nav-add" onClick={onAdd} aria-label="Добавить еду">
+        +
+      </button>
+      <button
+        className={`nav-item${active === "progress" ? " active" : ""}`}
+        onClick={() => onSelect("progress")}
+      >
+        Прогресс
       </button>
     </nav>
   );

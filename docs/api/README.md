@@ -42,10 +42,15 @@ OpenAPI-контракт появится вместе с первым реал�
 | GET    | `/v1/meal-analyses/:id`         | Статус/результат анализа (poll, до READY_TO_CONFIRM и т.п.)                                        |
 | POST   | `/v1/meal-analyses/:id/refine`  | Исправление свободным текстом (mock — простой парсер грамм; Gemini — реальное понимание, ADR 0014) |
 | POST   | `/v1/meal-analyses/:id/confirm` | Подтверждение → создаёт MealEntry (идемпотентно, AT-004)                                           |
+| GET    | `/v1/recent-meals`              | Последние уникальные комбинации продуктов, для repeat-флоу (ADR 0015)                              |
+| POST   | `/v1/meals/repeat`              | Повторяет прошлый приём пищи (source REPEAT) через обычный `create()`-путь                         |
+| POST   | `/v1/weights`                   | Записать вес (upsert по локальному дню — «add/edit» одним эндпоинтом, ADR 0015)                    |
+| GET    | `/v1/progress`                  | Тренд веса + средние КБЖУ за 7/30/90 дней (`?range=`), только по залогированным дням               |
 
 Все, кроме `/health`, требуют `Authorization: Bearer <accessToken>`.
 
 ## Запланированные эндпоинты (master prompt §30)
 
 Полный список — в master prompt документа-источника (`03_..._Master_Prompt.docx`, §30).
-Следующие в очереди (Phase 6): `GET /v1/recent-meals`, `POST /v1/weights`, `GET /v1/progress`.
+Следующие в очереди (Phase 7+): `GET /v1/subscription`, `POST /v1/account/export`,
+`DELETE /v1/account`.

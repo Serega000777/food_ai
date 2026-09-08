@@ -60,14 +60,14 @@ wearables-интеграций, автообучение моделей на п�
 | 3    | Food/Nutrition Engine, ручной ввод еды, Diary, dashboard totals                              | ✅\*\*     |
 | 4    | Object storage, upload, AIAnalysis state machine, очередь, mock VisionProvider, AI Result UI | ✅\*\*\*   |
 | 5    | Первый реальный AI-провайдер (замена mock, тот же pipeline)                                  | ✅\*\*\*\* |
-| 6    | Recent/frequent meals, WeightLog, progress, analytics events                                 | —          |
+| 6    | Recent/frequent meals, WeightLog, progress, analytics events                                 | ✅         |
 | 7    | Hardening: observability, security review, e2e, accessibility, error UX                      | —          |
 | 8    | Monetization shell: EntitlementService, paywall после magic moment                           | —          |
 
 \* Bottom navigation появилась в Phase 3 вместе с Дневником: Сегодня / + / Дневник.
-Прогресс и AI по-прежнему скрыты — раньше это были бы вкладки на несуществующий
-функционал (master prompt §13: "Не оставляй fake screen, который обещает
-несуществующую функцию").
+Прогресс добавлен в Phase 6, когда ему стало что показывать; AI-вкладка по-прежнему
+скрыта — до неё это была бы вкладка на несуществующий функционал (master prompt §13:
+"Не оставляй fake screen, который обещает несуществующую функцию").
 
 \*\* Без `DailySummary`/`FoodNutrient` таблиц — итоги считаются на лету, микронутриенты
 не хранятся (ADR 0010, сознательное упрощение, не забытая работа).

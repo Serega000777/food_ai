@@ -4,10 +4,9 @@ import { users } from "./users";
 
 export const weightSourceEnum = pgEnum("weight_source", ["ONBOARDING", "MANUAL"]);
 
-/** Pulled forward from the coarse Phase 6 ("Weight + Progress") label — master prompt
- * §48's detailed build order bundles Weight into the early schema step because
- * onboarding itself needs to persist the starting weight measurement. The full
- * Progress feature (trend line, 7/30/90-day views) is still Phase 6. */
+/** Table exists since onboarding (which needs to persist the starting weight
+ * measurement), but the Progress feature reading it — trend line, 7/30/90-day views,
+ * `POST /v1/weights` for manual entries — is Phase 6 (master prompt §20). */
 export const weightLogs = pgTable(
   "weight_logs",
   {

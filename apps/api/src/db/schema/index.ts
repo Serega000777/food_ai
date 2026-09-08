@@ -1,5 +1,6 @@
 export * from "./ai-analyses";
 export * from "./ai-food-candidates";
+export * from "./analytics-events";
 export * from "./corrections";
 export * from "./foods";
 export * from "./goals";

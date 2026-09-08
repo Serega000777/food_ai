@@ -300,3 +300,9 @@ button {
   justify-content: space-between;
   margin-bottom: var(--space-2);
 }
+
+.weight-sparkline {
+  width: 100%;
+  height: 64px;
+  margin-top: var(--space-3);
+}

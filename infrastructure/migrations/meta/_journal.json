@@ -36,6 +36,13 @@
       "when": 1788789848359,
       "tag": "0004_rich_nekra",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788853684252,
+      "tag": "0005_lively_cable",
+      "breakpoints": true
     }
   ]
 }

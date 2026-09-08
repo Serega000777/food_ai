@@ -3,12 +3,12 @@ import { index, numeric, pgEnum, pgTable, timestamp, uuid } from "drizzle-orm/pg
 import { users } from "./users";
 
 export const mealTypeEnum = pgEnum("meal_type", ["BREAKFAST", "LUNCH", "DINNER", "SNACK", "OTHER"]);
-// VOICE/BARCODE/REPEAT join once those logging paths exist (Phase 1.1) — a MealEntry
-// itself needs no intermediate status column regardless of source: by the time one
-// exists it's already final, whether it came straight from manual input or from a
-// confirmed AIAnalysis (whose own draft/analyzing states live on that row instead,
-// master prompt §9).
-export const mealSourceEnum = pgEnum("meal_source", ["MANUAL", "TEXT", "PHOTO"]);
+// VOICE/BARCODE join once those logging paths exist (Phase 1.1) — REPEAT joined in
+// Phase 6 (master prompt §19's repeat flow). A MealEntry itself needs no intermediate
+// status column regardless of source: by the time one exists it's already final,
+// whether it came straight from manual input or from a confirmed AIAnalysis (whose own
+// draft/analyzing states live on that row instead, master prompt §9).
+export const mealSourceEnum = pgEnum("meal_source", ["MANUAL", "TEXT", "PHOTO", "REPEAT"]);
 
 /** totals are a denormalized snapshot (sum of this entry's meal_items, computed by
  * packages/nutrition) so the dashboard/diary can read a day's meals without summing

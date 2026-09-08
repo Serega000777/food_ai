@@ -36,3 +36,24 @@ export function localDayRangeUtc(dateStr: string, timeZone: string): LocalDayRan
 
   return { start, end };
 }
+
+/** `dateStr` +/- `days`, staying a plain calendar-date string — used to walk a
+ * multi-day range (Progress's 7/30/90-day windows) one `localDayRangeUtc` call at a
+ * time rather than re-deriving offsets from a `Date` in the wrong timezone. */
+export function shiftDateStr(dateStr: string, days: number): string {
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+/** "Today" as a calendar-date string in the user's own timezone, not the server's
+ * (AT-009's principle applied to a range endpoint, not just a single day). */
+export function localTodayDateStr(timeZone: string): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone }).format(new Date());
+}
+
+/** The calendar-date string (in `timeZone`) that `date` falls on — used to bucket a
+ * batch of UTC timestamps into local days without a per-row `localDayRangeUtc` query. */
+export function toLocalDateStr(date: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone }).format(date);
+}

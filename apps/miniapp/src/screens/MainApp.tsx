@@ -7,6 +7,7 @@ import { AddMealSheet } from "./AddMealSheet";
 import { BottomNav, type Tab } from "./BottomNav";
 import { Diary } from "./Diary";
 import { Home } from "./Home";
+import { Progress } from "./Progress";
 
 export function MainApp({ initialDashboard }: { initialDashboard: DashboardResponse }) {
   const [tab, setTab] = useState<Tab>("home");
@@ -20,11 +21,9 @@ export function MainApp({ initialDashboard }: { initialDashboard: DashboardRespo
   return (
     <div className="app-shell">
       <div className="app-content">
-        {tab === "home" ? (
-          <Home dashboard={dashboard} />
-        ) : (
-          <Diary onChanged={() => void refreshDashboard()} />
-        )}
+        {tab === "home" && <Home dashboard={dashboard} />}
+        {tab === "diary" && <Diary onChanged={() => void refreshDashboard()} />}
+        {tab === "progress" && <Progress />}
       </div>
 
       <BottomNav active={tab} onSelect={setTab} onAdd={() => setAddMealOpen(true)} />

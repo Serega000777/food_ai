@@ -1,4 +1,10 @@
-import { isValidTimeZone, localDayRangeUtc } from "./local-day";
+import {
+  isValidTimeZone,
+  localDayRangeUtc,
+  localTodayDateStr,
+  shiftDateStr,
+  toLocalDateStr,
+} from "./local-day";
 
 describe("isValidTimeZone", () => {
   it("accepts a real IANA zone", () => {
@@ -43,5 +49,28 @@ describe("localDayRangeUtc", () => {
   it("produces a 24-hour range across a plain (non-DST-transition) day", () => {
     const { start, end } = localDayRangeUtc("2026-06-15", "Europe/Moscow");
     expect(end.getTime() - start.getTime()).toBe(24 * 60 * 60 * 1000);
+  });
+});
+
+describe("shiftDateStr", () => {
+  it("moves forward across a month boundary", () => {
+    expect(shiftDateStr("2026-02-28", 1)).toBe("2026-03-01");
+  });
+
+  it("moves backward across a year boundary", () => {
+    expect(shiftDateStr("2026-01-01", -1)).toBe("2025-12-31");
+  });
+});
+
+describe("toLocalDateStr / localTodayDateStr", () => {
+  it("buckets a UTC instant into the correct local calendar day (positive offset)", () => {
+    // 00:10 MSK on the 6th is still 2026-03-05 in UTC.
+    const mealAt0010Local = new Date("2026-03-05T21:10:00.000Z");
+    expect(toLocalDateStr(mealAt0010Local, "Europe/Moscow")).toBe("2026-03-06");
+  });
+
+  it("localTodayDateStr matches toLocalDateStr(now, tz)", () => {
+    const now = new Date();
+    expect(localTodayDateStr("Europe/Moscow")).toBe(toLocalDateStr(now, "Europe/Moscow"));
   });
 });

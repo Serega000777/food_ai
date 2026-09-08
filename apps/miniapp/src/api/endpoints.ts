@@ -6,14 +6,20 @@ import type {
   DiaryResponse,
   Food,
   Goal,
+  LogWeightInput,
   MealAnalysisResponse,
   MealType,
   MeResponse,
   MealEntryDto,
+  ProgressRangeDays,
+  ProgressResponse,
+  RecentMealDto,
+  RepeatMealInput,
   UpdateMealInput,
   UpdateProfileInput,
   User,
   UserProfile,
+  WeightLogDto,
 } from "@food-ai/contracts";
 
 import { apiRequest, setTokens } from "./client";
@@ -106,4 +112,23 @@ export function confirmMealAnalysis(id: string, mealType: MealType): Promise<Mea
     method: "POST",
     body: JSON.stringify({ mealType }),
   });
+}
+
+export function getRecentMeals(): Promise<RecentMealDto[]> {
+  return apiRequest<RecentMealDto[]>("/v1/recent-meals");
+}
+
+export function repeatMeal(input: RepeatMealInput): Promise<MealEntryDto> {
+  return apiRequest<MealEntryDto>("/v1/meals/repeat", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function logWeight(input: LogWeightInput): Promise<WeightLogDto> {
+  return apiRequest<WeightLogDto>("/v1/weights", { method: "POST", body: JSON.stringify(input) });
+}
+
+export function getProgress(range?: ProgressRangeDays): Promise<ProgressResponse> {
+  return apiRequest<ProgressResponse>(`/v1/progress${range ? `?range=${range}` : ""}`);
 }

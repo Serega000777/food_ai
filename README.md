@@ -13,7 +13,8 @@ platform-agnostic, чтобы iOS/Android позже подключились к
 - **Client**: React + Vite Telegram Mini App (ADR 0009); native (Expo/React Native) позже на том же API.
 - **Monorepo**: pnpm workspaces + Turborepo (ADR 0002).
 - **Shared**: `packages/contracts` (Zod-схемы и типы, ADR 0005), `packages/domain` (Goal formula + Confidence Engine, ADR 0008),
-  `packages/nutrition` (граммы → БЖУ, ADR 0010), `packages/ai` (VisionProvider: mock + Gemini, ADR 0013, ADR 0014), `packages/ui-tokens`, `packages/config`.
+  `packages/nutrition` (граммы → БЖУ, ADR 0010), `packages/ai` (VisionProvider: mock + Gemini, ADR 0013, ADR 0014),
+  `packages/analytics` (типы продуктовых событий, ADR 0015), `packages/ui-tokens`, `packages/config`.
 - **Фото/очередь**: Redis + BullMQ, MinIO (S3-compatible) — добавлены в Phase 4, ровно
   когда появился реальный кейс (ADR 0006, ADR 0011, ADR 0012).
 
@@ -71,6 +72,7 @@ packages/
   domain/         чистые доменные правила (initial goal formula, confidence engine)
   nutrition/      per-100g→граммы, суммирование БЖУ — детерминированные, unit-tested
   ai/             VisionProvider-контракт: deterministic mock + Gemini (ADR 0013, ADR 0014)
+  analytics/      типы продуктовых событий (ADR 0015)
   ui-tokens/      design tokens (CSS custom properties)
   config/         общие tsconfig/eslint/prettier
 infrastructure/
@@ -80,8 +82,8 @@ docs/
   architecture/ · api/ · product/ · decisions/
 ```
 
-Пакеты `analytics`, `test-utils` (целевая структура, master prompt §4) появляются в
-репозитории по мере того, как их наполняет соответствующая фаза — не раньше.
+Пакет `test-utils` (целевая структура, master prompt §4) появится вместе с фазой,
+которой он реально нужен — не раньше.
 
 ## Правила разработки (не переносим в код без причины)
 
@@ -99,7 +101,6 @@ docs/
 
 ## Roadmap
 
-См. таблицу фаз в `docs/architecture/overview.md`. Текущий статус: **Phase 4** — фото
-приёма пищи (upload → очередь → mock AI → сопоставление с каталогом → Confidence Engine
-→ исправление текстом → подтверждение) полностью работает end-to-end, включая ручную
-проверку в браузере.
+См. таблицу фаз в `docs/product/mvp.md`. Текущий статус: **Phase 6** — recent/frequent
+meals с repeat-флоу, вес + прогресс (тренд, средние КБЖУ за 7/30/90 дней) и продуктовая
+аналитика полностью работают end-to-end, включая ручную проверку в браузере (ADR 0015).
