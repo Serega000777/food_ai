@@ -2,6 +2,7 @@ import type { ProgressRangeDays, ProgressResponse, WeightLogDto } from "@food-ai
 import { useEffect, useState } from "react";
 
 import { getProgress, logWeight } from "../api/endpoints";
+import { MacroBadges } from "../components/MacroBadges";
 
 const RANGE_OPTIONS: ProgressRangeDays[] = [7, 30, 90];
 
@@ -77,11 +78,11 @@ export function Progress() {
     <div className="screen">
       <p className="subtitle">Прогресс</p>
 
-      <div className="option-list-row">
+      <div className="segmented">
         {RANGE_OPTIONS.map((option) => (
           <button
             key={option}
-            className={`option-card${range === option ? " selected" : ""}`}
+            className={range === option ? "active" : ""}
             onClick={() => setRange(option)}
           >
             {option} дней
@@ -138,20 +139,7 @@ export function Progress() {
           </span>
         </div>
         <div className="big-number">{Math.round(averages.calories)} ккал</div>
-        <div className="macro-row">
-          <div className="macro-item">
-            <div className="label">Белки</div>
-            <div className="value">{Math.round(averages.proteinG)} г</div>
-          </div>
-          <div className="macro-item">
-            <div className="label">Жиры</div>
-            <div className="value">{Math.round(averages.fatG)} г</div>
-          </div>
-          <div className="macro-item">
-            <div className="label">Углеводы</div>
-            <div className="value">{Math.round(averages.carbsG)} г</div>
-          </div>
-        </div>
+        <MacroBadges proteinG={averages.proteinG} carbsG={averages.carbsG} fatG={averages.fatG} />
       </div>
 
       <div className="spacer" />

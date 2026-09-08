@@ -20,6 +20,12 @@
   --color-border: #e7e5e0;
   --color-danger: #d64545;
 
+  /* Macro-specific accents (MacroBadges) — protein/carbs/fat get a consistent color
+   * identity across screens, distinct from the single green calorie ring. */
+  --color-protein: #e2637a;
+  --color-carbs: #e8935b;
+  --color-fat: #5b8def;
+
   --radius-sm: 12px;
   --radius-md: 18px;
   --radius-lg: 24px;

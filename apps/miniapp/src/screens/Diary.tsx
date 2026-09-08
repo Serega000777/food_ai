@@ -2,14 +2,7 @@ import type { DiaryResponse } from "@food-ai/contracts";
 import { useEffect, useState } from "react";
 
 import { deleteMeal, getDiary } from "../api/endpoints";
-
-const MEAL_TYPE_LABEL: Record<string, string> = {
-  BREAKFAST: "Завтрак",
-  LUNCH: "Обед",
-  DINNER: "Ужин",
-  SNACK: "Перекус",
-  OTHER: "Другое",
-};
+import { MealCard } from "../components/MealCard";
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -60,20 +53,7 @@ export function Diary({ onChanged }: { onChanged: () => void }) {
       )}
       {!loading &&
         diary?.meals.map((meal) => (
-          <div key={meal.id} className="card">
-            <div className="meal-card-header">
-              <strong>{MEAL_TYPE_LABEL[meal.mealType] ?? meal.mealType}</strong>
-              <span>{Math.round(meal.totalCalories)} ккал</span>
-            </div>
-            {meal.items.map((item) => (
-              <div key={item.id} className="subtitle">
-                {item.displayName} · {Math.round(item.grams)} г
-              </div>
-            ))}
-            <button className="back-link" onClick={() => void handleDelete(meal.id)}>
-              Удалить
-            </button>
-          </div>
+          <MealCard key={meal.id} meal={meal} onDelete={() => void handleDelete(meal.id)} />
         ))}
     </div>
   );
