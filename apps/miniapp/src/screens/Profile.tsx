@@ -1,32 +1,35 @@
-import type { DashboardResponse, MeResponse, ProgressResponse } from "@food-ai/contracts";
+import type { DashboardResponse, Goal, MeResponse, ProgressResponse } from "@food-ai/contracts";
 import { useEffect, useState } from "react";
 
-import { getDashboard, getMe, getProgress, logWeight } from "../api/endpoints";
+import { getDashboard, getGoal, getMe, getProgress } from "../api/endpoints";
 
 import { OnboardingFlow } from "./onboarding/OnboardingFlow";
+import { EditGoalsScreen } from "./profile/EditGoalsScreen";
+import { PersonalDataScreen } from "./profile/PersonalDataScreen";
+import { ProfileRoot, type ProfileView } from "./profile/ProfileRoot";
+import { SettingsScreen } from "./profile/SettingsScreen";
+import { WeightHistoryScreen } from "./profile/WeightHistoryScreen";
 
-const SEX_LABEL: Record<string, string> = { male: "Мужской", female: "Женский" };
-
-/** "Личный кабинет" — the weight/goal-editing home the onboarding wizard doesn't have
- * once it's done. Re-running the goal calculation reuses `OnboardingFlow` itself
- * rather than a second wizard implementation. */
+/** "Личный кабинет" — root list + four sub-screens (own files under screens/profile/).
+ * All four load off the same fetch here, so saving on any of them just re-runs `load`
+ * and returns to the root list rather than each screen managing its own refetch. */
 export function Profile() {
+  const [view, setView] = useState<ProfileView | "root">("root");
   const [me, setMe] = useState<MeResponse | null>(null);
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
+  const [goal, setGoal] = useState<Goal | null>(null);
   const [progress, setProgress] = useState<ProgressResponse | null>(null);
-  const [weightInput, setWeightInput] = useState("");
-  const [logging, setLogging] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [wizardOpen, setWizardOpen] = useState(false);
 
   async function load() {
-    const [meRes, dashboardRes, progressRes] = await Promise.all([
+    const [meRes, dashboardRes, goalRes, progressRes] = await Promise.all([
       getMe(),
       getDashboard(),
+      getGoal(),
       getProgress(7),
     ]);
     setMe(meRes);
     setDashboard(dashboardRes);
+    setGoal(goalRes);
     setProgress(progressRes);
   }
 
@@ -34,34 +37,7 @@ export function Profile() {
     void load();
   }, []);
 
-  async function submitWeight() {
-    const weightKg = Number(weightInput);
-    if (!weightKg || weightKg <= 0) return;
-    setLogging(true);
-    setError(null);
-    try {
-      await logWeight({ weightKg });
-      setWeightInput("");
-      await load();
-    } catch {
-      setError("Не получилось сохранить вес. Попробуй ещё раз.");
-    } finally {
-      setLogging(false);
-    }
-  }
-
-  if (wizardOpen) {
-    return (
-      <OnboardingFlow
-        onComplete={() => {
-          setWizardOpen(false);
-          void load();
-        }}
-      />
-    );
-  }
-
-  if (!me || !dashboard) {
+  if (!me || !dashboard || !goal) {
     return (
       <div className="screen">
         <p className="subtitle">Загрузка...</p>
@@ -69,73 +45,37 @@ export function Profile() {
     );
   }
 
-  return (
-    <div className="screen">
-      <p className="title">Профиль</p>
+  function backToRoot() {
+    setView("root");
+  }
 
-      <div className="card">
-        <div className="meal-card-header">
-          <strong>Текущий вес</strong>
-          {progress && progress.weightTrend.currentWeightKg !== null && (
-            <span>{progress.weightTrend.currentWeightKg} кг</span>
-          )}
-        </div>
-        <div className="field" style={{ marginTop: "var(--space-3)" }}>
-          <label>Записать вес сегодня</label>
-          <div className="option-list-row">
-            <input
-              type="number"
-              inputMode="decimal"
-              placeholder="кг"
-              style={{ flex: 1 }}
-              value={weightInput}
-              onChange={(e) => setWeightInput(e.target.value)}
-            />
-            <button
-              className="primary-button"
-              disabled={logging || !weightInput}
-              onClick={() => void submitWeight()}
-            >
-              {logging ? "..." : "Сохранить"}
-            </button>
-          </div>
-          {error && <p className="error-text">{error}</p>}
-        </div>
-      </div>
+  function savedAndBack() {
+    void load();
+    setView("root");
+  }
 
-      <div className="card">
-        <strong>Дневная цель</strong>
-        <div className="big-number" style={{ marginTop: "var(--space-2)" }}>
-          {Math.round(dashboard.target.calories)} ккал
-        </div>
-        <div className="macro-row">
-          <div className="macro-item">
-            <div className="label">Белки</div>
-            <div className="value">{Math.round(dashboard.target.proteinG)} г</div>
-          </div>
-          <div className="macro-item">
-            <div className="label">Жиры</div>
-            <div className="value">{Math.round(dashboard.target.fatG)} г</div>
-          </div>
-          <div className="macro-item">
-            <div className="label">Углеводы</div>
-            <div className="value">{Math.round(dashboard.target.carbsG)} г</div>
-          </div>
-        </div>
-        <button className="back-link" onClick={() => setWizardOpen(true)}>
-          Пересчитать цель
-        </button>
-      </div>
+  if (view === "recalculate") {
+    return <OnboardingFlow onComplete={savedAndBack} />;
+  }
+  if (view === "goals") {
+    return <EditGoalsScreen target={dashboard.target} onBack={backToRoot} onSaved={savedAndBack} />;
+  }
+  if (view === "personal") {
+    return (
+      <PersonalDataScreen
+        me={me}
+        targetWeightKg={goal.targetWeightKg}
+        onBack={backToRoot}
+        onSaved={savedAndBack}
+      />
+    );
+  }
+  if (view === "weightHistory") {
+    return <WeightHistoryScreen onBack={backToRoot} />;
+  }
+  if (view === "settings") {
+    return <SettingsScreen onBack={backToRoot} />;
+  }
 
-      <div className="card">
-        <strong>Данные профиля</strong>
-        <p className="subtitle" style={{ marginTop: "var(--space-2)" }}>
-          {me.profile.sex ? SEX_LABEL[me.profile.sex] : "—"} · {me.profile.heightCm ?? "—"} см ·{" "}
-          {me.profile.birthDate ?? "—"}
-        </p>
-      </div>
-
-      <div className="spacer" />
-    </div>
-  );
+  return <ProfileRoot progress={progress} onNavigate={setView} />;
 }

@@ -46,3 +46,11 @@ export function UserIcon() {
     </svg>
   );
 }
+
+export function ChevronRightIcon() {
+  return (
+    <svg {...COMMON} width={18} height={18}>
+      <path d="M9 6l6 6-6 6" />
+    </svg>
+  );
+}

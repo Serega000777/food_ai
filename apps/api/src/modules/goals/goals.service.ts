@@ -1,7 +1,7 @@
-import type { CreateGoalInput, Goal } from "@food-ai/contracts";
+import type { CreateGoalInput, Goal, UpdateGoalInput } from "@food-ai/contracts";
 import { calculateInitialGoal } from "@food-ai/domain";
 import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 
 import type { Database } from "../../db/client";
 import { DATABASE } from "../../db/database.token";
@@ -82,6 +82,59 @@ export class GoalsService {
             fatTargetG: formula.fatTargetG,
             carbTargetG: formula.carbTargetG,
             source: "INITIAL_FORMULA",
+            effectiveFrom: now,
+          })
+          .returning(),
+      );
+
+      return toGoal(created);
+    });
+  }
+
+  private async getActiveRow(userId: string) {
+    const [active] = await this.db
+      .select()
+      .from(goals)
+      .where(and(eq(goals.userId, userId), isNull(goals.effectiveTo)))
+      .orderBy(desc(goals.effectiveFrom))
+      .limit(1);
+    return active ?? null;
+  }
+
+  async getActive(userId: string): Promise<Goal> {
+    const active = await this.getActiveRow(userId);
+    if (!active) throw new NotFoundException("No active goal — complete onboarding first");
+    return toGoal(active);
+  }
+
+  /** Direct override (master prompt §12) — never runs the initial-formula calculation;
+   * unset fields keep the current active goal's value. Closes out the active goal and
+   * inserts a new one, same pattern as `create()`, so history stays intact. */
+  async update(userId: string, input: UpdateGoalInput): Promise<Goal> {
+    const active = await this.getActiveRow(userId);
+    if (!active) throw new NotFoundException("No active goal — complete onboarding first");
+
+    return this.db.transaction(async (tx) => {
+      const now = new Date();
+
+      await tx.update(goals).set({ effectiveTo: now }).where(eq(goals.id, active.id));
+
+      const created = firstOrThrow(
+        await tx
+          .insert(goals)
+          .values({
+            userId,
+            type: active.type,
+            targetWeightKg:
+              input.targetWeightKg !== undefined
+                ? input.targetWeightKg.toString()
+                : active.targetWeightKg,
+            paceKgPerWeek: active.paceKgPerWeek,
+            calorieTarget: input.calorieTarget ?? active.calorieTarget,
+            proteinTargetG: input.proteinTargetG ?? active.proteinTargetG,
+            fatTargetG: input.fatTargetG ?? active.fatTargetG,
+            carbTargetG: input.carbTargetG ?? active.carbTargetG,
+            source: "USER",
             effectiveFrom: now,
           })
           .returning(),

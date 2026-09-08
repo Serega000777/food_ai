@@ -118,4 +118,42 @@ describe("Onboarding (e2e)", () => {
       .set("Authorization", `Bearer ${accessToken}`)
       .expect(404);
   });
+
+  it("PATCH /v1/goals overrides targets directly, without running the formula (master prompt §12)", async () => {
+    const { accessToken } = await loginAsNewUser(app);
+    const auth = { Authorization: `Bearer ${accessToken}` };
+
+    await request(app.getHttpServer())
+      .patch("/v1/me/profile")
+      .set(auth)
+      .send({ birthDate: "1996-01-01", sex: "male", heightCm: 178 })
+      .expect(200);
+    await request(app.getHttpServer())
+      .post("/v1/goals")
+      .set(auth)
+      .send({ type: "MAINTAIN", currentWeightKg: 80, activityLevel: "sedentary" })
+      .expect(201);
+
+    // Only calories given — protein/fat/carb and targetWeightKg should carry over
+    // from the active goal untouched, not reset to zero/null.
+    const updateRes = await request(app.getHttpServer())
+      .patch("/v1/goals")
+      .set(auth)
+      .send({ calorieTarget: 1800 })
+      .expect(200);
+
+    expect(updateRes.body.calorieTarget).toBe(1800);
+    expect(updateRes.body.source).toBe("USER");
+
+    const getRes = await request(app.getHttpServer()).get("/v1/goals").set(auth).expect(200);
+    expect(getRes.body).toMatchObject({ calorieTarget: 1800, source: "USER" });
+  });
+
+  it("GET /v1/goals 404s before onboarding sets a goal", async () => {
+    const { accessToken } = await loginAsNewUser(app);
+    await request(app.getHttpServer())
+      .get("/v1/goals")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .expect(404);
+  });
 });

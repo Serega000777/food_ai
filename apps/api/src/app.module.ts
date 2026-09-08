@@ -5,6 +5,7 @@ import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 
 import { validateEnv } from "./config/env";
 import { DbModule } from "./db/db.module";
+import { AccountModule } from "./modules/account/account.module";
 import { AiModule } from "./modules/ai/ai.module";
 import { AnalyticsModule } from "./modules/analytics/analytics.module";
 import { AuthModule } from "./modules/auth/auth.module";
@@ -33,6 +34,7 @@ import { UsersModule } from "./modules/users/users.module";
     AiModule,
     AuthModule,
     UsersModule,
+    AccountModule,
     GoalsModule,
     FoodsModule,
     MealsModule,

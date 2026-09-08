@@ -43,12 +43,23 @@
   --motion-base: 300ms ease;
 }
 
+/* System-follows-OS default. Guarded so an explicit `data-theme="light"` choice
+ * (Настройки → Внешний вид) still wins over a dark OS preference. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --color-bg: #1c1e1d;
     --color-surface: #262927;
     --color-text: #f2f1ee;
     --color-text-muted: #a3a8a4;
     --color-border: #34372f;
   }
+}
+
+/* Explicit `data-theme="dark"` choice — wins regardless of OS preference. */
+:root[data-theme="dark"] {
+  --color-bg: #1c1e1d;
+  --color-surface: #262927;
+  --color-text: #f2f1ee;
+  --color-text-muted: #a3a8a4;
+  --color-border: #34372f;
 }

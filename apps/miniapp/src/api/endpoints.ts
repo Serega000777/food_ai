@@ -15,6 +15,7 @@ import type {
   ProgressResponse,
   RecentMealDto,
   RepeatMealInput,
+  UpdateGoalInput,
   UpdateMealInput,
   UpdateProfileInput,
   User,
@@ -22,7 +23,7 @@ import type {
   WeightLogDto,
 } from "@food-ai/contracts";
 
-import { apiRequest, setTokens } from "./client";
+import { apiRequest, getRefreshToken, setTokens } from "./client";
 
 export async function loginWithTelegram(initData: string): Promise<User> {
   // AT-009 needs the user's real local day boundary server-side — detect it here
@@ -50,6 +51,14 @@ export function updateProfile(input: UpdateProfileInput): Promise<UserProfile> {
 
 export function createGoal(input: CreateGoalInput): Promise<Goal> {
   return apiRequest<Goal>("/v1/goals", { method: "POST", body: JSON.stringify(input) });
+}
+
+export function getGoal(): Promise<Goal> {
+  return apiRequest<Goal>("/v1/goals");
+}
+
+export function updateGoal(input: UpdateGoalInput): Promise<Goal> {
+  return apiRequest<Goal>("/v1/goals", { method: "PATCH", body: JSON.stringify(input) });
 }
 
 export function getDashboard(date?: string): Promise<DashboardResponse> {
@@ -131,4 +140,23 @@ export function logWeight(input: LogWeightInput): Promise<WeightLogDto> {
 
 export function getProgress(range?: ProgressRangeDays): Promise<ProgressResponse> {
   return apiRequest<ProgressResponse>(`/v1/progress${range ? `?range=${range}` : ""}`);
+}
+
+/** Revokes the current session server-side, then clears local tokens. In real
+ * Telegram, the Mini App re-authenticates automatically on next open (Telegram's own
+ * identity), so this is "sign out of this session/device", not a persistent
+ * logged-out state — that's the correct behavior for a Mini App, not a shortcut. */
+export async function logout(): Promise<void> {
+  const refreshToken = getRefreshToken();
+  if (refreshToken) {
+    await apiRequest<void>("/v1/auth/logout", {
+      method: "POST",
+      body: JSON.stringify({ refreshToken }),
+    }).catch(() => undefined);
+  }
+  setTokens(null);
+}
+
+export function deleteAccount(): Promise<void> {
+  return apiRequest<void>("/v1/account", { method: "DELETE" });
 }

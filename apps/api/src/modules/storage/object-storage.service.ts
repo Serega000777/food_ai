@@ -1,5 +1,6 @@
 import {
   CreateBucketCommand,
+  DeleteObjectCommand,
   GetObjectCommand,
   PutObjectCommand,
   S3Client,
@@ -71,5 +72,11 @@ export class ObjectStorageService implements OnModuleInit {
     return getSignedUrl(this.client, new GetObjectCommand({ Bucket: this.bucket, Key: key }), {
       expiresIn: DOWNLOAD_URL_TTL_SECONDS,
     });
+  }
+
+  /** Used by account deletion (master prompt §26: "account deletion удаляет/очередит
+   * удаление objects") — deleting an object that's already gone is not an error. */
+  async deleteObject(key: string): Promise<void> {
+    await this.client.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: key }));
   }
 }

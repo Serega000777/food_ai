@@ -31,7 +31,9 @@ OpenAPI-контракт появится вместе с первым реал�
 | POST   | `/v1/auth/logout`               | Отзыв сессии                                                                                       |
 | GET    | `/v1/me`                        | Текущий user + profile                                                                             |
 | PATCH  | `/v1/me/profile`                | Обновление профиля (онбординг автосохраняет по полям)                                              |
+| GET    | `/v1/goals`                     | Активная цель (нужна для отображения/редактирования в Профиле)                                     |
 | POST   | `/v1/goals`                     | Сервер считает и сохраняет план по формуле (ADR 0008)                                              |
+| PATCH  | `/v1/goals`                     | Прямое переопределение целей без пересчёта формулы (master prompt §12, ADR 0016)                   |
 | GET    | `/v1/dashboard`                 | Цель/съедено/осталось на дату + приёмы пищи                                                        |
 | GET    | `/v1/foods/search`              | Поиск по каталогу продуктов (`?q=`)                                                                |
 | POST   | `/v1/meals`                     | Ручное создание приёма пищи (`Idempotency-Key` опционально)                                        |
@@ -46,11 +48,11 @@ OpenAPI-контракт появится вместе с первым реал�
 | POST   | `/v1/meals/repeat`              | Повторяет прошлый приём пищи (source REPEAT) через обычный `create()`-путь                         |
 | POST   | `/v1/weights`                   | Записать вес (upsert по локальному дню — «add/edit» одним эндпоинтом, ADR 0015)                    |
 | GET    | `/v1/progress`                  | Тренд веса + средние КБЖУ за 7/30/90 дней (`?range=`), только по залогированным дням               |
+| DELETE | `/v1/account`                   | Удаление аккаунта: чистит объекты в S3, затем каскадно удаляет всё через `users` (ADR 0016)        |
 
 Все, кроме `/health`, требуют `Authorization: Bearer <accessToken>`.
 
 ## Запланированные эндпоинты (master prompt §30)
 
 Полный список — в master prompt документа-источника (`03_..._Master_Prompt.docx`, §30).
-Следующие в очереди (Phase 7+): `GET /v1/subscription`, `POST /v1/account/export`,
-`DELETE /v1/account`.
+Следующие в очереди (Phase 7+): `GET /v1/subscription`, `POST /v1/account/export`.
